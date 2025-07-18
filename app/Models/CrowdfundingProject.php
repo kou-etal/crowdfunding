@@ -1,0 +1,36 @@
+<?php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use App\Models\CrowdfundingSupport;
+
+class CrowdfundingProject extends Model
+{
+
+
+    protected $fillable = [
+        'user_id',
+        'title',
+        'description',
+        'goal_amount',
+        'deadline',
+        'image_path',
+    ];
+
+       protected $casts = [
+    'deadline' => 'datetime',
+];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function supports()
+    {
+        return $this->hasMany(CrowdfundingSupport::class, 'project_id');
+    }
+}
+
+
+
