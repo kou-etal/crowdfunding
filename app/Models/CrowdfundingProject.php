@@ -8,14 +8,19 @@ class CrowdfundingProject extends Model
 {
 
 
-    protected $fillable = [
-        'user_id',
-        'title',
-        'description',
-        'goal_amount',
-        'deadline',
-        'image_path',
-    ];
+  protected $fillable = [
+    'user_id',
+    'title',
+    'description',
+    'goal_amount',
+    'deadline',
+    'image_path',
+    'is_submitted',
+    'is_approved',
+    'is_rejected',
+    'rejected_reason',
+];
+
 
        protected $casts = [
     'deadline' => 'datetime',

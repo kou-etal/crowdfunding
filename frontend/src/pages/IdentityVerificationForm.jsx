@@ -30,36 +30,35 @@ export function IdentityVerificationForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!faceImage || !docImage) return alert("両方の画像をアップロードしてください。");
-    if (!form.honor_statement) return alert("honor statement を承諾してください。");
-
     setLoading(true);
     try {
-      // ① 画像アップロード
       const imageForm = new FormData();
-      imageForm.append("face_image", faceImage);
-      imageForm.append("document_image", docImage);
+      if (faceImage) imageForm.append("face_image", faceImage);
+      if (docImage) imageForm.append("document_image", docImage);
 
-      const uploadRes = await axiosInstance.post("/api/identity-verification/upload-images", imageForm, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const uploadRes = await axiosInstance.post(
+        "/api/identity-verification/upload-images",
+        imageForm,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
 
       const { face_image_url, document_image_url } = uploadRes.data;
 
-      // ② 情報保存
       await axiosInstance.post("/api/identity-verification", {
         face_image_path: face_image_url,
         document_image_path: document_image_url,
-        honor_statement: true,
+        honor_statement: form.honor_statement,
         supervisor_name: form.supervisor_name,
         supervisor_email: form.supervisor_email,
         supervisor_affiliation: form.supervisor_affiliation,
       });
 
-      alert("提出が完了しました！");
+      alert("Submission completed successfully!");
     } catch (err) {
-      console.error("送信失敗", err);
-      alert("送信に失敗しました");
+      console.error("Submission failed", err.response?.data || err);
+      alert("Failed to submit. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -67,44 +66,80 @@ export function IdentityVerificationForm() {
 
   return (
     <AppLayout>
-      <Card className="max-w-3xl mx-auto mt-20 shadow-md">
-        <CardContent className="space-y-6 p-8">
-          <h2 className="text-2xl font-bold">本人確認フォーム</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
+      <Card className="max-w-3xl w-full mx-auto mt-20 mb-10 shadow-md">
+        <CardContent className="space-y-8 p-8">
+          <h2 className="text-3xl font-bold text-center text-blue-900">Identity Verification Form</h2>
+
+          <p className="text-sm text-gray-700 text-center">
+            Acceptable identification documents (only one required):<br />
+            <span className="font-medium">Passport, Driver's License, or National ID Card</span>
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <Label>顔写真:</Label>
-              <Input type="file" accept="image/*" onChange={(e) => setFaceImage(e.target.files?.[0] || null)} />
+              <Label htmlFor="faceImage">Face photo (holding your ID)</Label>
+              <Input
+                id="faceImage"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setFaceImage(e.target.files?.[0] || null)}
+              />
             </div>
 
             <div>
-              <Label>本人確認書類画像:</Label>
-              <Input type="file" accept="image/*" onChange={(e) => setDocImage(e.target.files?.[0] || null)} />
+              <Label htmlFor="docImage">Photo of your identification document</Label>
+              <Input
+                id="docImage"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setDocImage(e.target.files?.[0] || null)}
+              />
             </div>
 
             <div>
-              <Label>指導教員氏名:</Label>
-              <Input name="supervisor_name" value={form.supervisor_name} onChange={handleChange} />
+              <Label htmlFor="supervisor_name">Supervisor's Full Name</Label>
+              <Input
+                id="supervisor_name"
+                name="supervisor_name"
+                value={form.supervisor_name}
+                onChange={handleChange}
+              />
             </div>
 
             <div>
-              <Label>指導教員メールアドレス:</Label>
-              <Input name="supervisor_email" value={form.supervisor_email} onChange={handleChange} />
+              <Label htmlFor="supervisor_email">Supervisor's Email Address</Label>
+              <Input
+                id="supervisor_email"
+                name="supervisor_email"
+                type="email"
+                value={form.supervisor_email}
+                onChange={handleChange}
+              />
             </div>
 
             <div>
-              <Label>指導教員所属機関:</Label>
-              <Input name="supervisor_affiliation" value={form.supervisor_affiliation} onChange={handleChange} />
+              <Label htmlFor="supervisor_affiliation">Supervisor's Affiliation</Label>
+              <Input
+                id="supervisor_affiliation"
+                name="supervisor_affiliation"
+                value={form.supervisor_affiliation}
+                onChange={handleChange}
+              />
             </div>
 
             <div className="flex items-start space-x-2">
-              <Checkbox id="honor_statement" checked={form.honor_statement} onCheckedChange={handleCheckboxChange} />
+              <Checkbox
+                id="honor_statement"
+                checked={form.honor_statement}
+                onCheckedChange={handleCheckboxChange}
+              />
               <Label htmlFor="honor_statement" className="text-sm leading-snug">
-                上記の情報が真実であり、不正な資金利用や虚偽の申告を行わないことを誓います。
+                I certify that all the information provided above is true and I pledge not to misuse research funding.
               </Label>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "送信中..." : "提出する"}
+              {loading ? "Submitting..." : "Submit Verification"}
             </Button>
           </form>
         </CardContent>
@@ -112,3 +147,4 @@ export function IdentityVerificationForm() {
     </AppLayout>
   );
 }
+

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 export function ProjectDetail() {
   const { id } = useParams();
   const [project, setProject] = useState(null);
-  const [amount, setAmount] = useState(""); // 支援金額
+  const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export function ProjectDetail() {
 
   const handleSupport = async () => {
     if (!amount || isNaN(amount) || parseInt(amount) <= 0) {
-      alert("有効な支援金額を入力してください");
+      alert("Please enter a valid support amount.");
       return;
     }
 
@@ -39,10 +39,10 @@ export function ProjectDetail() {
         project_id: project.id,
         amount: parseInt(amount),
       });
-      window.location.href = res.data.url; // Stripeへリダイレクト
+      window.location.href = res.data.url;
     } catch (err) {
-      console.error("支援セッション作成失敗", err);
-      alert("支援処理に失敗しました");
+      console.error("Support session creation failed", err);
+      alert("Failed to process support request.");
     } finally {
       setLoading(false);
     }
@@ -52,37 +52,60 @@ export function ProjectDetail() {
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto mt-10">
-        <Card className="shadow-lg">
-          <CardContent className="p-8 space-y-6">
+      <div className="max-w-7xl mx-auto mt-10 grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
+        {/* Left: Project Details */}
+        <div className="md:col-span-2">
+          <Card className="shadow-lg">
+            <CardContent className="p-8 space-y-6">
+              <h1 className="text-3xl font-bold text-blue-900">{project.title}</h1>
+              <p className="text-gray-700 leading-relaxed">{project.description}</p>
 
-            <h1 className="text-3xl font-bold">{project.title}</h1>
-            <p className="text-gray-600">{project.description}</p>
-
-            <div className="space-y-2">
-              <div className="text-sm text-gray-500">
-                目標金額: ¥{project.goal_amount.toLocaleString()} / 現在: ¥{project.current_amount.toLocaleString()}
+              <div className="space-y-2">
+                <div className="text-sm text-gray-500">
+                  Target: ${project.goal_amount.toLocaleString()} / Raised: ${project.current_amount.toLocaleString()}
+                </div>
+                <Progress value={project.progress_percent} />
+                <div className="text-sm text-gray-500">Progress: {project.progress_percent}%</div>
               </div>
-              <Progress value={project.progress_percent} />
-              <div className="text-sm text-gray-500">
-                達成率: {project.progress_percent}%
+
+              <div className="pt-6 space-y-3">
+                <Input
+                  type="number"
+                  placeholder="Enter support amount ($)"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+                <Button className="w-full" onClick={handleSupport} disabled={loading}>
+                  {loading ? "Processing..." : "Support this project"}
+                </Button>
               </div>
-            </div>
+            </CardContent>
+          </Card>
+        </div>
 
-            <div className="pt-6 space-y-3">
-              <Input
-                type="number"
-                placeholder="支援金額（円）"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-              <Button className="w-full" onClick={handleSupport} disabled={loading}>
-                {loading ? "処理中..." : "支援する"}
-              </Button>
-            </div>
+        {/* Right: Researcher / Supervisor Info */}
+        <div>
+          <Card className="shadow-md">
+            <CardContent className="p-6 space-y-4">
+              <h2 className="text-xl font-bold text-blue-800">Project Owner</h2>
+              <div className="flex items-center gap-4">
+                <img
+                  src={project.user?.profile_image}
+                  alt={project.user?.name}
+                  className="w-14 h-14 rounded-full object-cover border"
+                />
+                <p className="font-semibold text-gray-900">{project.user?.name}</p>
+              </div>
 
-          </CardContent>
-        </Card>
+              <div className="pt-4">
+                <h3 className="text-md font-semibold text-gray-700">Supervisor</h3>
+                <p className="text-sm text-gray-600">{project.supervisor_name || "N/A"}</p>
+                <p className="text-sm text-gray-600">{project.supervisor_email || "N/A"}</p>
+                <p className="text-sm text-gray-600">{project.supervisor_affiliation || "N/A"}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </AppLayout>
   );

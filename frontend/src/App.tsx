@@ -27,6 +27,8 @@ import { GroupManager } from './pages/GroupManager';
 import { SupportSuccess } from "./pages/SupportSuccess";
 import { IdentityVerificationForm } from './pages/IdentityVerificationForm';
 import { AdminIdentityVerificationList } from './pages/AdminIdentityVerificationLis';
+import { MyProjects } from './pages/MyProjects';
+import { AdminProjectReview } from './pages/AdminProjectReview';
 
 
 export function App() {
@@ -60,8 +62,10 @@ export function App() {
         <Route path="/privatechat/:targetUserId" element={<UserChatPage/>} />
         <Route path="/admin/dashboard" element={<DashBoard/>} />
         <Route path="/admin/users" element={<UserData/>} />
-        <Route path="/success" element={<SupportSuccess />} />
+        <Route path="/admin/review" element={<AdminProjectReview/>} />
+        <Route path="/success" element={<SupportSuccess/>} />
         <Route path="/verify" element={<IdentityVerificationForm />} />
+        <Route path="/myprojects" element={<MyProjects />} />
         </Routes>
     </BrowserRouter>
   );

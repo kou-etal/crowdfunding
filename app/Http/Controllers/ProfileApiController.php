@@ -82,22 +82,41 @@ class ProfileApiController extends Controller
         return response()->json($request->user());
     }
 
-    public function updateIntroduction(Request $request)
+ public function updateIntroduction(Request $request)
 {
     $validated = $request->validate([
         'name' => 'string|max:255',
         'bio' => 'nullable|string',
+        'role' => 'required|in:researcher,supporter', // ✅ チェックボックスで必須
         'degree' => 'nullable|string|in:修士,博士,その他',
         'expertise' => 'nullable|string|max:255',
         'university' => 'nullable|string|max:255',
         'institute' => 'nullable|string|max:255',
     ]);
 
+    // ✅ role に応じて項目の制御（researcher なら必須）
+    if ($validated['role'] === 'researcher') {
+        foreach (['degree', 'expertise', 'university', 'institute'] as $field) {
+            if (empty($validated[$field])) {
+                return response()->json([
+                    'message' => "研究者として登録するには「{$field}」の入力が必要です。"
+                ], 422);
+            }
+        }
+    } else {
+        // supporter の場合は空でもOK、nullに統一して保存
+        $validated['degree'] = null;
+        $validated['expertise'] = null;
+        $validated['university'] = null;
+        $validated['institute'] = null;
+    }
+
     $user = $request->user();
     $user->update($validated);
 
     return response()->json(['message' => 'プロフィールを更新しました']);
 }
+
 
 
 

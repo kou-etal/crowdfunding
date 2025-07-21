@@ -13,33 +13,30 @@ export function ProfileEdit() {
     name: '',
     bio: '',
     profile_image: '',
+    role: 'supporter',
     degree: '',
     expertise: '',
     university: '',
     institute: ''
   });
- const [imageFile, setImageFile] = useState(null);
-
+  const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
     axiosInstance.get('/api/profile')
-  .then(res => {
-    const data = res.data;
-
-    // degreeなどが数値なら文字列に変換
-    setProfile({
-      name: data.name || '',
-      bio: data.bio || '',
-      profile_image: data.profile_image || '',
-      degree: data.degree?.toString() || '',
-      expertise: data.expertise || '',
-      university: data.university || '',
-      institute: data.institute || ''
-    });
-
-    console.log('レスポンス内容:', data);
-  })
-  .catch(err => console.error('取得失敗', err));
+      .then(res => {
+        const data = res.data;
+        setProfile({
+          name: data.name || '',
+          bio: data.bio || '',
+          profile_image: data.profile_image || '',
+          role: data.role || 'supporter',
+          degree: data.degree?.toString() || '',
+          expertise: data.expertise || '',
+          university: data.university || '',
+          institute: data.institute || ''
+        });
+      })
+      .catch(err => console.error('Failed to fetch profile', err));
   }, []);
 
   const handleChange = e => {
@@ -48,6 +45,10 @@ export function ProfileEdit() {
 
   const handleDegreeChange = value => {
     setProfile(prev => ({ ...prev, degree: value }));
+  };
+
+  const handleRoleChange = value => {
+    setProfile(prev => ({ ...prev, role: value }));
   };
 
   const handleImageChange = e => {
@@ -63,15 +64,10 @@ export function ProfileEdit() {
       await axiosInstance.post('/api/profile-image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-
       const res = await axiosInstance.get('/api/profile');
       setProfile(res.data);
     } catch (err) {
-      if (err.response?.status === 401) {
-        alert('Please log in.');
-      } else {
-        console.error('画像アップロード失敗', err);
-      }
+      alert('Failed to upload image');
     }
   };
 
@@ -81,13 +77,10 @@ export function ProfileEdit() {
       await axiosInstance.post('/api/profile', profile);
       alert('Profile updated successfully!');
     } catch (err) {
-      if (err.response?.status === 401) {
-        alert('Please log in.');
-      } else {
-        console.error('更新失敗', err);
-      }
+      alert('Failed to update profile');
     }
   };
+
   return (
     <AppLayout>
       <Card className="max-w-4xl w-full mt-20 mb-8 shadow-md">
@@ -97,7 +90,7 @@ export function ProfileEdit() {
             {profile.profile_image && (
               <img
                 src={profile.profile_image}
-                alt="Profile Picture"
+                alt="Profile"
                 className="w-20 h-20 rounded-full object-cover"
               />
             )}
@@ -105,7 +98,7 @@ export function ProfileEdit() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label>Select Image:</Label>
+              <Label>Profile Image:</Label>
               <Input type="file" onChange={handleImageChange} />
               <Button type="button" onClick={handleImageUpload} className="mt-1" variant="secondary">
                 Upload
@@ -123,38 +116,52 @@ export function ProfileEdit() {
             </div>
 
             <div>
-  <Label>Degree:</Label>
-  <Select value={profile.degree} onValueChange={handleDegreeChange}>
-    <SelectTrigger>
-      <SelectValue placeholder="Select degree">
-        {profile.degree || 'Select degree'}
-      </SelectValue>
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="修士">修士</SelectItem>
-      <SelectItem value="博士">博士</SelectItem>
-      <SelectItem value="その他">その他</SelectItem>
-    </SelectContent>
-  </Select>
-</div>
-
-
-            <div>
-              <Label>Expertise:</Label>
-              <Input name="expertise" value={profile.expertise} onChange={handleChange} />
+              <Label>Role:</Label>
+              <Select value={profile.role} onValueChange={handleRoleChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="supporter">Supporter</SelectItem>
+                  <SelectItem value="researcher">Researcher</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
-              <Label>University:</Label>
-              <Input name="university" value={profile.university} onChange={handleChange} />
-            </div>
+            {profile.role === 'researcher' && (
+              <>
+                <div>
+                  <Label>Degree:</Label>
+                  <Select value={profile.degree} onValueChange={handleDegreeChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select degree" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="修士">Master's</SelectItem>
+                      <SelectItem value="博士">PhD</SelectItem>
+                      <SelectItem value="その他">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div>
-              <Label>Institute:</Label>
-              <Input name="institute" value={profile.institute} onChange={handleChange} />
-            </div>
+                <div>
+                  <Label>Expertise:</Label>
+                  <Input name="expertise" value={profile.expertise} onChange={handleChange} />
+                </div>
 
-            <Button type="submit" className="w-full">Save</Button>
+                <div>
+                  <Label>University:</Label>
+                  <Input name="university" value={profile.university} onChange={handleChange} />
+                </div>
+
+                <div>
+                  <Label>Institute:</Label>
+                  <Input name="institute" value={profile.institute} onChange={handleChange} />
+                </div>
+              </>
+            )}
+
+            <Button type="submit" className="w-full">Save Changes</Button>
           </form>
         </CardContent>
       </Card>

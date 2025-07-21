@@ -4,6 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Link } from 'react-router-dom';
 import AppLayout from '../components/AppLayout';
+import ProjectCard from '../components/ProjectCard';
+import {HeroSection} from '../components/HeroSection';
 
 export function CrowdfundingProjectList() {
   const [projects, setProjects] = useState([]);
@@ -22,26 +24,15 @@ export function CrowdfundingProjectList() {
   }, []);
 
   return (
-    <AppLayout>
-      <div className="max-w-4xl w-full mx-auto mt-20 space-y-6">
-        {projects.map(project => (
-          <Card key={project.id}>
-            <CardContent className="p-6 space-y-4">
-              <h2 className="text-xl font-semibold">{project.title}</h2>
 
-              <div className="flex items-center justify-between">
-                <span>進捗: {project.progress_percent}%</span>
-                <Progress value={project.progress_percent} className="w-2/3" />
-              </div>
-
-              <Link
-                to={`/crowdfunding/${project.id}`}
-                className="text-blue-500 hover:underline inline-block mt-2"
-              >
-                詳細を見る
-              </Link>
-            </CardContent>
-          </Card>
+     <AppLayout>
+      <HeroSection />
+      <h1 className="text-5xl text-center text-cf-science-blue pt-10">Support the Researchers of Tomorrow!</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 p-10">
+        {projects
+  .filter(project => project.is_approved)
+  .map(project => (
+          <ProjectCard key={project.id} project={project} />
         ))}
       </div>
     </AppLayout>

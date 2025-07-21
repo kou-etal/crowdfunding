@@ -11,10 +11,16 @@ export function DashBoard(){
 
         <div className="pl-4">
           <Link
-            to="/admin/creategroup"
+            to="/admin/verify"
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded shadow"
           >
-            グループ作成
+           本人確認申請一覧
+          </Link>
+            <Link
+            to="/admin/review"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded shadow"
+          >
+            キャンペーン投稿申請一覧
           </Link>
         </div>
       </div>

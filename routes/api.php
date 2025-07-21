@@ -30,6 +30,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/identity-verifications/{id}/reject', [IdentityVerificationAdminController::class, 'reject']);
 });
 
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/identity-verification/upload-images', [IdentityVerificationApiController::class, 'uploadVerificationImages']);
     Route::post('/identity-verification', [IdentityVerificationApiController::class, 'store']);
@@ -80,8 +81,11 @@ Route::post('/cart/clear', [CartApiController::class, 'clear'])->name('cart.clea
 Route::middleware(['auth:sanctum',AdminMiddleware::class])->group(function () {
     Route::get('/admin/users', [ProfileApiController::class, 'index']);
     Route::get('/identity-verifications', [IdentityVerificationAdminController::class, 'index']);
+    Route::post('/crowdfunding-projects/{id}/approve', [CrowdfundingProjectApiController::class, 'approve']);
+    Route::post('/crowdfunding-projects/{id}/reject', [CrowdfundingProjectApiController::class, 'reject']);
     Route::post('/identity-verifications/{id}/reject', [IdentityVerificationAdminController::class, 'reject']);
     Route::post('/identity-verifications/{id}/approve', [IdentityVerificationAdminController::class, 'approve']);
+    Route::get('/admin/pending-projects', [CrowdfundingProjectApiController::class, 'pending']);
 });
 Route::middleware('auth:sanctum')->get('/users',[ProfileApiController::class, 'index']);
 Route::middleware('auth:sanctum')->group(function () {
@@ -89,6 +93,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/unfollow/{userId}', [FollowController::class, 'unfollow']);
     Route::get('/follow-status/{userId}', [FollowController::class, 'isFollowing']);
     Route::get('/followings', [FollowController::class, 'index']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/my-projects', [CrowdfundingProjectApiController::class, 'myProjects']);
 });
 
 

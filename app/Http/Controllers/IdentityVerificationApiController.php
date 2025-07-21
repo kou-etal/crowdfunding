@@ -9,14 +9,18 @@ class IdentityVerificationApiController extends Controller
 {
 public function store(Request $request)
 {
-    $request->validate([
-        'face_image_path' => 'required|url|max:1000',
-        'document_image_path' => 'required|url|max:1000',
-        'honor_statement' => 'accepted',
-        'supervisor_name' => 'required|string|max:255',
-        'supervisor_email' => 'required|email',
-        'supervisor_affiliation' => 'required|string|max:255',
-    ]);
+   // Laravelコントローラー
+
+  
+$request->validate([
+    'face_image_path' => 'required|string|max:1000',
+    'document_image_path' => 'required|string|max:1000',
+    'honor_statement' => 'accepted',
+    'supervisor_name' => 'required|string|max:255',
+    'supervisor_email' => 'required|email',
+    'supervisor_affiliation' => 'required|string|max:255',
+]);
+
 
     $user = $request->user();
 

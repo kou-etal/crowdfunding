@@ -28,8 +28,10 @@ class User extends Authenticatable implements MustVerifyEmail
     'expertise',
     'university',
     'institute',
-    'is_verified', 
-    ];
+    'is_verified',
+    'role', // ✅ 追加
+];
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -81,6 +83,10 @@ public function groups()
 public function ownedGroups()
 {
     return $this->hasMany(Group::class, 'created_by');
+}
+public function identityVerification()
+{
+    return $this->hasOne(IdentityVerification::class);
 }
 }
 
