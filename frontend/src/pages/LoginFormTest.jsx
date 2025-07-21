@@ -27,7 +27,7 @@ export function LoginFormTest() {
 
   return (
       <AppLayout>
-      <Card className="max-w-4xl w-full mt-20 mb-8 shadow-md">
+      <Card className="max-w-4xl mx-auto w-full mt-20 mb-8 shadow-md">
         <CardContent className="p-8 space-y-6">
           <h2 className="text-2xl font-bold">Login</h2>
     

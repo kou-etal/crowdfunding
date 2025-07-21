@@ -52,15 +52,16 @@ export function AdminProjectReview() {
     <AppLayout>
       <div className="max-w-5xl mx-auto mt-20 space-y-6">
         <h1 className="text-3xl font-bold">提出されたプロジェクト一覧</h1>
-
+        <div className="grid grid-cols-2 gap-4">
         {projects.length === 0 ? (
           <p>現在、審査待ちのプロジェクトはありません。</p>
         ) : (
           projects.map((project) => (
+            
             <Card key={project.id}>
               <CardContent className="p-6 space-y-2">
-                <p><strong>タイトル:</strong> {project.title}</p>
-                <p><strong>説明:</strong> {project.description}</p>
+                <p className="w-full break-words"><strong>タイトル:</strong> {project.title}</p>
+                <p className="w-full break-words"><strong>説明:</strong> {project.description}</p>
                 <p><strong>目標金額:</strong> ¥{project.goal_amount.toLocaleString()}</p>
                 <p><strong>締切日:</strong> {project.deadline}</p>
 
@@ -76,8 +77,10 @@ export function AdminProjectReview() {
                 </div>
               </CardContent>
             </Card>
+            
           ))
         )}
+      </div>
       </div>
     </AppLayout>
   );

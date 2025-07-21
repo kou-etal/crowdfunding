@@ -102,61 +102,74 @@ public function approve(Request $request, $id)
     // 一覧取得
 public function index()
 {
-    $projects = CrowdfundingProject::where('is_approved', true)
-        ->where('is_rejected', false)
-        ->with('user') // ← ユーザー情報をEager Load
-        ->orderBy('created_at', 'desc')
-        ->get()
-        ->map(function ($project) {
-            $project->progress_percent = $project->supports->sum('amount') / $project->goal_amount * 100;
+   $projects = CrowdfundingProject::where('is_approved', true)
+    ->where('is_rejected', false)
+    ->with(['user.identityVerification']) // ← 追加
+    ->orderBy('created_at', 'desc')
+    ->get()
+    ->map(function ($project) {
+        $project->progress_percent = $project->supports->sum('amount') / $project->goal_amount * 100;
 
-            // ユーザー情報を追加（null安全に）
-            $project->ownerAvatarUrl = $project->user?->profile_image;
-            $project->ownerName = $project->user?->name;
+        // 顔画像は identityVerification 優先
+        $project->ownerAvatarUrl = optional($project->user->identityVerification)->face_image_path
+            ?? $project->user?->profile_image;
 
-            // プロジェクト画像（あれば）
-            $project->imageUrl = $project->image_path;
+        $project->ownerName = $project->user?->name;
+        $project->imageUrl = $project->image_path;
 
-            return $project;
-        });
+        return $project;
+    });
+
+        
 
     return response()->json($projects);
 }
 
 
 public function show($id)
-{$project = CrowdfundingProject::with([
-    'user:id,name,profile_image',
-    'user.identityVerification:id,user_id,supervisor_name,supervisor_email,supervisor_affiliation', // ← 追加
-    'supports.user:id,name'
-])->findOrFail($id);
+{
+    $project = CrowdfundingProject::with([
+        'user:id,name,email,profile_image,bio,degree,expertise,university,institute',
+        'user.identityVerification:id,user_id,supervisor_name,supervisor_email,supervisor_affiliation,face_image_path',
+        'supports.user:id,name'
+    ])->findOrFail($id);
 
+    $identity = $project->user->identityVerification;
 
     return response()->json([
-    'id' => $project->id,
-    'title' => $project->title,
-    'description' => $project->description,
-    'goal_amount' => $project->goal_amount,
-    'current_amount' => $project->supports->sum('amount'),
-    'progress_percent' => min(100, round($project->supports->sum('amount') / $project->goal_amount * 100)),
-    'user' => $project->user,
-    'supports' => $project->supports->map(function ($support) {
-        return [
-            'amount' => $support->amount,
-            'user' => $support->user,
-            'supported_at' => $support->created_at->toDateTimeString(),
-        ];
-    }),
-    'deadline' => $project->deadline->toDateString(),
-    'created_at' => $project->created_at->toDateTimeString(),
-
-    // ← ここに追加
-    'supervisor_name' => optional($project->user->identityVerification)->supervisor_name,
-    'supervisor_email' => optional($project->user->identityVerification)->supervisor_email,
-    'supervisor_affiliation' => optional($project->user->identityVerification)->supervisor_affiliation,
-]);
-
+        'id' => $project->id,
+        'title' => $project->title,
+        'description' => $project->description,
+        'goal_amount' => $project->goal_amount,
+        'current_amount' => $project->supports->sum('amount'),
+        'progress_percent' => min(100, round($project->supports->sum('amount') / $project->goal_amount * 100)),
+        'user' => [
+            'name' => $project->user->name,
+            'email' => $project->user->email, // ← ✅ 追加
+            'bio' => $project->user->bio,
+            'degree' => $project->user->degree,
+            'expertise' => $project->user->expertise,
+            'university' => $project->user->university,
+            'institute' => $project->user->institute,
+            'profile_image' => optional($identity)->face_image_path ?? $project->user->profile_image,
+        ],
+        'supervisor_name' => optional($identity)->supervisor_name,
+        'supervisor_email' => optional($identity)->supervisor_email,
+        'supervisor_affiliation' => optional($identity)->supervisor_affiliation,
+        'supports' => $project->supports->map(function ($support) {
+            return [
+                'amount' => $support->amount,
+                'user' => $support->user,
+                'supported_at' => $support->created_at->toDateTimeString(),
+            ];
+        }),
+        'deadline' => $project->deadline->toDateString(),
+        'created_at' => $project->created_at->toDateTimeString(),
+    ]);
 }
 
 
 }
+
+
+

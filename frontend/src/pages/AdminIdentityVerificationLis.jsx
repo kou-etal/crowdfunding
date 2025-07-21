@@ -38,44 +38,56 @@ export function AdminIdentityVerificationList() {
   };
 
   return (
-    <AppLayout>
-  <div className="max-w-5xl mx-auto mt-20 space-y-6">
-    <h1 className="text-3xl font-bold">本人確認申請一覧</h1>
+     <AppLayout>
+      <div className="max-w-5xl mx-auto mt-20 space-y-6">
+        <h1 className="text-3xl font-bold">本人確認申請一覧</h1>
 
-    {loading ? (
-      <p>読み込み中...</p>
-    ) : verifications.filter(v => v.status !== "approved" && v.status !== "rejected").length === 0 ? (
-      <p>申請はまだありません。</p>
-    ) : (
-      verifications
-        .filter(v => v.status !== "approved" && v.status !== "rejected")
-        .map((v) => (
-          <Card key={v.id}>
-            <CardContent className="p-6 space-y-2">
-              <p><strong>ユーザーID:</strong> {v.user_id}</p>
-              <p><strong>氏名:</strong> {v.user?.name || "N/A"}</p>
-              <p><strong>指導教員:</strong> {v.supervisor_name}</p>
-              <p><strong>メール:</strong> {v.supervisor_email}</p>
-              <p><strong>所属機関:</strong> {v.supervisor_affiliation}</p>
-              <p><strong>誓約:</strong> {v.honor_statement ? "✓" : "✗"}</p>
-              <p>
-                <strong>顔写真:</strong><br />
-                <img src={v.face_image_url} alt="face" className="w-32 h-32 object-cover border" />
-              </p>
-              <p>
-                <strong>書類:</strong><br />
-                <img src={v.document_image_url} alt="document" className="w-32 h-32 object-cover border" />
-              </p>
-              <div className="space-x-2 mt-4">
-                <Button variant="success" onClick={() => handleAction(v.id, "approve")}>承認</Button>
-                <Button variant="destructive" onClick={() => handleAction(v.id, "reject")}>却下</Button>
+        {loading ? (
+          <p>読み込み中...</p>
+        ) : verifications.filter(v => v.status !== "approved" && v.status !== "rejected").length === 0 ? (
+          <p>申請はまだありません。</p>
+        ) : (
+          verifications
+            .filter(v => v.status !== "approved" && v.status !== "rejected")
+            .map((v) => (
+              <div key={v.id} className="flex w-full p-4 border rounded-lg shadow-md">
+                {/* 左側の画像セクション (横並び) */}
+                <div className="flex items-center space-x-4 pr-4">
+                  <div className="text-center">
+                    <strong>顔写真:</strong><br />
+                    <img src={v.face_image_url} alt="face" className="w-48 h-48 object-cover border-2 border-gray-300 rounded-md" />
+                  </div>
+                  <div className="text-center">
+                    <strong>書類:</strong><br />
+                    <img src={v.document_image_url} alt="document" className="w-48 h-48 object-cover border-2 border-gray-300 rounded-md" />
+                  </div>
+                </div>
+
+                {/* 右側のテキスト情報セクションとボタン */}
+                <div className="flex flex-grow flex-col justify-between pl-4"> {/* flex-col と justify-between で縦方向配置と間隔を管理 */}
+                  <div className="grid grid-cols-2 gap-x-1"> {/* Using grid for two columns of text */}
+                    <div >
+                      <p className="mb-2"><strong>ユーザーID:</strong> {v.user_id}</p>
+                      <p className="mb-2"><strong>氏名:</strong> {v.user?.name || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="mb-2"><strong>指導教員:</strong> {v.supervisor_name}</p>
+                      <p className="mb-2"><strong>メール:</strong> {v.supervisor_email}</p>
+                      <p className="mb-2"><strong>所属機関:</strong> {v.supervisor_affiliation}</p>
+                      <p className="mb-2"><strong>誓約:</strong> {v.honor_statement ? "✓" : "✗"}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-2 mt-4"> {/* ボタンを右下に配置するため justify-end を使用 */}
+                    <Button variant="success" onClick={() => handleAction(v.id, "approve")}>承認</Button>
+                    <Button variant="destructive" onClick={() => handleAction(v.id, "reject")}>却下</Button>
+                  </div>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        ))
-    )}
-  </div>
-</AppLayout>
+            ))
+        )}
+      </div>
+    </AppLayout>
 
   );
 }

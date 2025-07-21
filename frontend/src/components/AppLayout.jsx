@@ -192,7 +192,7 @@ export default function AppLayout({ children }) {
         <MobileMenu />
       </div>
 
-     <main className="mx-auto">
+     <main >
         {children}
       </main>
 

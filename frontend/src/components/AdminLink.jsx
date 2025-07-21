@@ -27,9 +27,9 @@ export function AdminLink() {
   return (
     <div>
     <Link to="/admin/dashboard" className="text-red-500">
-      ⚙️ admin
+      Admin
     </Link>
-    
+
     </div>
   );
 }

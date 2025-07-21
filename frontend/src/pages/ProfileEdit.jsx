@@ -83,7 +83,7 @@ export function ProfileEdit() {
 
   return (
     <AppLayout>
-      <Card className="max-w-4xl w-full mt-20 mb-8 shadow-md">
+      <Card className="max-w-4xl mx-auto w-full mt-20 mb-8 shadow-md">
         <CardContent className="p-8 space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold">Edit Profile</h2>
