@@ -35,6 +35,10 @@ class CrowdfundingProject extends Model
     {
         return $this->hasMany(CrowdfundingSupport::class, 'project_id');
     }
+    public function payoutRecord()
+{
+    return $this->hasOne(PayoutRecord::class);
+}
 }
 
 

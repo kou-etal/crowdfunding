@@ -24,6 +24,7 @@ use App\Http\Controllers\CrowdfundingProjectApiController;
 use App\Http\Controllers\CrowdfundingSupportApiController;
 use App\Http\Controllers\IdentityVerificationApiController;
 use App\Http\Controllers\IdentityVerificationAdminController;
+use App\Http\Controllers\PayoutRecordApiController;
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     Route::get('/identity-verifications', [IdentityVerificationAdminController::class, 'index']);
@@ -86,6 +87,9 @@ Route::middleware(['auth:sanctum',AdminMiddleware::class])->group(function () {
     Route::post('/identity-verifications/{id}/reject', [IdentityVerificationAdminController::class, 'reject']);
     Route::post('/identity-verifications/{id}/approve', [IdentityVerificationAdminController::class, 'approve']);
     Route::get('/admin/pending-projects', [CrowdfundingProjectApiController::class, 'pending']);
+    Route::get('/admin/payout-records', [PayoutRecordApiController::class, 'index']);
+    Route::post('/admin/payout-records/{id}/mark-paid', [PayoutRecordApiController::class, 'markAsPaid']);
+    
 });
 Route::middleware('auth:sanctum')->get('/users',[ProfileApiController::class, 'index']);
 Route::middleware('auth:sanctum')->group(function () {
@@ -151,3 +155,4 @@ Route::middleware('auth:sanctum')->post('/paid-posts',[PaidPostApiController::cl
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
 
 Route::middleware('auth:sanctum')->post('/paid-posts/checkout', [PaidPostApiController::class, 'checkout']);
+Route::post('/crowdfunding-projects/image', [CrowdfundingProjectApiController::class, 'uploadProjectImage']);

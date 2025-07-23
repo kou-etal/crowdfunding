@@ -32,7 +32,8 @@ const ProjectCard = ({ project }) => {
 
       <div className="p-5">
         {/* Avatar and Owner name */}
-        <div className="flex items-center gap-3 mb-4 -mt-14 ml-2 relative z-10">
+        <div className="flex items-center gap-3 mb-4 mt-2 ml-2 relative z-10">
+
           <img
             src={project.ownerAvatarUrl}
             alt={project.ownerName}

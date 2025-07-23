@@ -23,10 +23,10 @@ export function DashBoard(){
             キャンペーン投稿申請一覧
           </Link>
           <Link
-            to="/admin/verify"
+            to="/admin/pay"
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-10 px-4 rounded shadow"
           >
-           本人確認申請一覧
+           支払い情報
           </Link>
         </div>
       </div>

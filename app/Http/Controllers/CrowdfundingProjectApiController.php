@@ -16,8 +16,9 @@ class CrowdfundingProjectApiController extends Controller
     $validated = $request->validate([
         'title' => 'required|string|max:255',
         'description' => 'required|string|max:5000',
-        'goal_amount' => 'required|integer|min:1000',
+        'goal_amount' => 'required|integer|min:10',
         'deadline' => 'required|date|after:today',
+        'image_path' => 'nullable|string|max:1000', // ← URLとして受け取る
     ]);
 
     $project = CrowdfundingProject::create([
@@ -26,8 +27,9 @@ class CrowdfundingProjectApiController extends Controller
         'description' => $validated['description'],
         'goal_amount' => $validated['goal_amount'],
         'deadline' => $validated['deadline'],
-        'is_submitted' => true,    // ← 提出済みにして保存
-        'is_approved' => false,    // ← まだ未承認
+        'image_path' => $validated['image_path'] ?? null,
+        'is_submitted' => true,
+        'is_approved' => false,
     ]);
 
     return response()->json([
@@ -35,6 +37,22 @@ class CrowdfundingProjectApiController extends Controller
         'project' => $project,
     ], 201);
 }
+
+public function uploadProjectImage(Request $request)
+{
+    $request->validate([
+        'image' => 'required|image|max:5000',
+    ]);
+
+    $path = $request->file('image')->store('projects', 'public');
+
+    $imageUrl = config('app.url') . '/storage/' . $path;
+
+    return response()->json([
+        'image_url' => $imageUrl,
+    ]);
+}
+
 
 public function reject(Request $request, $id)
 {
@@ -104,20 +122,20 @@ public function index()
 {
    $projects = CrowdfundingProject::where('is_approved', true)
     ->where('is_rejected', false)
-    ->with(['user.identityVerification']) // ← 追加
+    ->with(['user.identityVerification', 'supports.user']) // supports 必須
     ->orderBy('created_at', 'desc')
     ->get()
     ->map(function ($project) {
-        $project->progress_percent = $project->supports->sum('amount') / $project->goal_amount * 100;
-
-        // 顔画像は identityVerification 優先
+        $sum = $project->supports->sum('amount');
+        $project->currentAmount = $sum;
+        $project->progress_percent = $project->goal_amount > 0 ? ($sum / $project->goal_amount * 100) : 0;
         $project->ownerAvatarUrl = optional($project->user->identityVerification)->face_image_path
             ?? $project->user?->profile_image;
-
         $project->ownerName = $project->user?->name;
         $project->imageUrl = $project->image_path;
 
         return $project;
+   
     });
 
         
@@ -129,7 +147,7 @@ public function index()
 public function show($id)
 {
     $project = CrowdfundingProject::with([
-        'user:id,name,email,profile_image,bio,degree,expertise,university,institute',
+        'user:id,name,full_name,email,profile_image,bio,degree,expertise,university,institute',
         'user.identityVerification:id,user_id,supervisor_name,supervisor_email,supervisor_affiliation,face_image_path',
         'supports.user:id,name'
     ])->findOrFail($id);
@@ -145,6 +163,7 @@ public function show($id)
         'progress_percent' => min(100, round($project->supports->sum('amount') / $project->goal_amount * 100)),
         'user' => [
             'name' => $project->user->name,
+            'full_name' => $project->user->full_name,
             'email' => $project->user->email, // ← ✅ 追加
             'bio' => $project->user->bio,
             'degree' => $project->user->degree,

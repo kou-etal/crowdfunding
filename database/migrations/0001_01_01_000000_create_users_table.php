@@ -10,31 +10,29 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('users', function (Blueprint $table) {
-        $table->id();
-        $table->string('name');
-        $table->string('email')->unique();
-        $table->timestamp('email_verified_at')->nullable();
-        $table->string('password');
-        $table->boolean('is_admin')->default(false);
-        $table->boolean('is_verified')->default(false);
+    {
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('full_name')->nullable(); // ✅ フルネーム追加
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->boolean('is_admin')->default(false);
+            $table->boolean('is_verified')->default(false);
 
-        // ✅ 新規追加：ユーザー種別
-        $table->enum('role', ['researcher', 'supporter'])->default('supporter');
+            $table->enum('role', ['researcher', 'supporter'])->default('supporter');
 
-        $table->string('profile_image')->nullable();
-        $table->text('bio')->nullable();
-        $table->string('degree')->nullable();
-        $table->string('expertise')->nullable();
-        $table->string('university')->nullable();
-        $table->string('institute')->nullable();
+            $table->string('profile_image')->nullable();
+            $table->text('bio')->nullable();
+            $table->string('degree')->nullable();
+            $table->string('expertise')->nullable();
+            $table->string('university')->nullable();
+            $table->string('institute')->nullable();
 
-        $table->rememberToken();
-        $table->timestamps();
-    });
-
-
+            $table->rememberToken();
+            $table->timestamps();
+        });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();

@@ -20,6 +20,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $fillable = [
     'name',
+    'full_name',
     'email',
     'password',
     'profile_image',
@@ -87,6 +88,10 @@ public function ownedGroups()
 public function identityVerification()
 {
     return $this->hasOne(IdentityVerification::class);
+}
+public function payoutRecords()
+{
+    return $this->hasMany(PayoutRecord::class);
 }
 }
 

@@ -11,6 +11,7 @@ import AppLayout from '../components/AppLayout';
 export function ProfileEdit() {
   const [profile, setProfile] = useState({
     name: '',
+    full_name: '',
     bio: '',
     profile_image: '',
     role: 'supporter',
@@ -27,6 +28,7 @@ export function ProfileEdit() {
         const data = res.data;
         setProfile({
           name: data.name || '',
+          full_name: data.full_name || '', 
           bio: data.bio || '',
           profile_image: data.profile_image || '',
           role: data.role || 'supporter',
@@ -106,13 +108,19 @@ export function ProfileEdit() {
             </div>
 
             <div>
-              <Label>Name:</Label>
+              <Label>User Name:</Label>
               <Input name="name" value={profile.name} onChange={handleChange} />
             </div>
 
             <div>
+  <Label>Full Name:</Label>
+  <Input name="full_name" value={profile.full_name} onChange={handleChange} />
+</div>
+
+
+            <div>
               <Label>Bio:</Label>
-              <Textarea name="bio" value={profile.bio} onChange={handleChange} />
+              <Textarea className='h-90' name="bio" value={profile.bio} onChange={handleChange} />
             </div>
 
             <div>

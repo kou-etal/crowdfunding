@@ -77,7 +77,7 @@ export function RegisterForm() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="6文字以上"
+                placeholder="8文字以上"
                 required
               />
               {errors.password && (
