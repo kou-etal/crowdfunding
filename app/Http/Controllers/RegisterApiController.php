@@ -23,7 +23,7 @@ public function register(Request $request) {
         'email' => $validated['email'],
         'password' => Hash::make($validated['password']),
     ]);
- //   event(new Registered($user));
+    // event(new Registered($user));
     Auth::login($user);
 
     return response()->json(['message' => 'Temporary registration successful. A verification email has been sent.', 'user' => $user]);

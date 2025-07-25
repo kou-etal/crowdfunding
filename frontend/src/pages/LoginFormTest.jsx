@@ -12,6 +12,7 @@ export function LoginFormTest() {
   const [message, setMessage] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [loading, setLoading] = useState(false); // ← 追加
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,6 +32,7 @@ export function LoginFormTest() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
+    setLoading(true); // ← ローディング開始
 
     try {
       await axiosInstance.get('/sanctum/csrf-cookie');
@@ -43,6 +45,8 @@ export function LoginFormTest() {
       } else {
         setMessage('Login failed.');
       }
+    } finally {
+      setLoading(false); // ← ローディング終了
     }
   };
 
@@ -74,8 +78,8 @@ export function LoginFormTest() {
                 placeholder="Password"
                 required
               />
-              <Button type="submit" className="w-full">
-                Log in
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Logging in..." : "Log in"}
               </Button>
             </form>
           )}

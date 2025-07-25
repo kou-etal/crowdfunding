@@ -13,11 +13,13 @@ export function RegisterForm() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false); 
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
+    setLoading(true); 
     try {
       await axiosInstance.get("/sanctum/csrf-cookie");
       const res = await axiosInstance.post("/api/register", {
@@ -32,6 +34,8 @@ export function RegisterForm() {
       if (err.response?.data?.errors) {
         setErrors(err.response.data.errors);
       }
+    } finally {
+      setLoading(false); 
     }
   };
 
@@ -85,8 +89,8 @@ export function RegisterForm() {
               )}
             </div>
 
-            <Button type="submit" className="w-full">
-              Register
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Registering..." : "Register"}
             </Button>
           </form>
 
@@ -98,3 +102,4 @@ export function RegisterForm() {
     </AppLayout>
   );
 }
+
