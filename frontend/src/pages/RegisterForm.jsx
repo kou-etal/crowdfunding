@@ -28,7 +28,7 @@ export function RegisterForm() {
       });
       setMessage(res.data.message);
     } catch (err) {
-      console.error("登録失敗:", err.response?.data);
+      console.error("Registration failed:", err.response?.data);
       if (err.response?.data?.errors) {
         setErrors(err.response.data.errors);
       }
@@ -44,25 +44,25 @@ export function RegisterForm() {
           </h1>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="name">ユーザー名 *</Label>
+              <Label htmlFor="name">Username *</Label>
               <Input
                 id="name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="例: Taro Yamada"
+                placeholder="e.g. Taro Yamada"
                 required
               />
             </div>
 
             <div>
-              <Label htmlFor="email">メールアドレス *</Label>
+              <Label htmlFor="email">Email Address *</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="例: example@mail.com"
+                placeholder="e.g. example@mail.com"
                 required
               />
               {errors.email && (
@@ -71,13 +71,13 @@ export function RegisterForm() {
             </div>
 
             <div>
-              <Label htmlFor="password">パスワード *</Label>
+              <Label htmlFor="password">Password *</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="8文字以上"
+                placeholder="At least 8 characters"
                 required
               />
               {errors.password && (
@@ -86,7 +86,7 @@ export function RegisterForm() {
             </div>
 
             <Button type="submit" className="w-full">
-              登録する
+              Register
             </Button>
           </form>
 

@@ -14,7 +14,7 @@ export function LogoutTest() {
         await axiosInstance.post('/logout');
         setMessage('Log out successful.');
       } catch (err) {
-        console.error('ログアウト失敗', err.response?.data);
+        console.error('Logout failed', err.response?.data);
         setMessage('Logout failed.');
       }
     };
@@ -35,3 +35,4 @@ export function LogoutTest() {
     </div>
   );
 }
+

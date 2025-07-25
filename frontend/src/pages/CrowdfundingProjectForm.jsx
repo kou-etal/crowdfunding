@@ -128,7 +128,7 @@ export function CrowdfundingProjectForm() {
                 {errors.goal_amount?.[0] && <p className="text-red-500 text-sm mt-1">{errors.goal_amount[0]}</p>}
               </div>
 
-              {/* 締切 */}
+              
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Deadline<span className="text-red-500 ml-1">*</span>
@@ -143,7 +143,6 @@ export function CrowdfundingProjectForm() {
                 {errors.deadline?.[0] && <p className="text-red-500 text-sm mt-1">{errors.deadline[0]}</p>}
               </div>
 
-              {/* 画像 */}
               <div>
                 <label className="block text-sm font-medium mb-1">Project Image (optional)</label>
                 <Input
@@ -153,7 +152,6 @@ export function CrowdfundingProjectForm() {
                 />
               </div>
 
-              {/* 送信ボタン */}
               <div className="pt-4">
                 <Button type="submit" className="w-full bg-blue-700 hover:bg-blue-800" disabled={loading}>
                   {loading ? 'Submitting...' : 'Submit Project for Review'}

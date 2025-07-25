@@ -12,7 +12,7 @@ export function MyProjects() {
         const res = await axiosInstance.get('/api/my-projects');
         setProjects(res.data);
       } catch (err) {
-        console.error('プロジェクト一覧取得失敗', err);
+        console.error('Failed to fetch project list', err);
       }
     };
 
@@ -23,11 +23,11 @@ export function MyProjects() {
     <AppLayout>
       <div className="max-w-4xl mx-auto mt-16 px-6 flex flex-col items-center space-y-8">
         <h1 className="text-4xl font-extrabold text-cf-science-blue text-center border-b pb-2 border-blue-300 w-full">
-          🧬 自分のプロジェクト一覧
+          My Projects
         </h1>
 
         {projects.length === 0 ? (
-          <p className="text-center text-gray-500 mt-10">まだプロジェクトはありません。</p>
+          <p className="text-center text-gray-500 mt-10">No projects yet.</p>
         ) : (
           <div className="flex flex-col space-y-6 w-full">
             {projects.map((project) => (
@@ -36,29 +36,29 @@ export function MyProjects() {
                 className="border border-blue-200 bg-white shadow-md hover:shadow-lg transition duration-300 w-full"
               >
                 <CardContent className="p-6 space-y-3">
-                  <h2 className="text-2xl font-bold text-blue-900 break-words">📘 {project.title}</h2>
+                  <h2 className="text-2xl font-bold text-blue-900 break-words">{project.title}</h2>
 
                   <div className="text-gray-800 space-y-1 text-base">
                     <p>
-                      <span className="font-semibold text-cf-science-blue">🎯 目標金額:</span>{' '}
+                      <span className="font-semibold text-cf-science-blue">Target Amount:</span>{' '}
                       ¥{project.goal_amount.toLocaleString()}
                     </p>
                     <p>
-                      <span className="font-semibold text-cf-science-blue">📅 締切:</span>{' '}
+                      <span className="font-semibold text-cf-science-blue">Deadline:</span>{' '}
                       {new Date(project.deadline).toLocaleDateString()}
                     </p>
                     <p>
-                      <span className="font-semibold text-cf-science-blue">📊 ステータス:</span>{' '}
+                      <span className="font-semibold text-cf-science-blue">Status:</span>{' '}
                       {project.is_approved ? (
-                        <span className="text-green-700 font-semibold">✅ 承認済み</span>
+                        <span className="text-green-700 font-semibold">Approved</span>
                       ) : project.is_rejected ? (
                         <span className="text-red-600 font-semibold">
-                          ❌ 却下（{project.rejected_reason || '理由未記入'}）
+                          Rejected ({project.rejected_reason || 'No reason provided'})
                         </span>
                       ) : project.is_submitted ? (
-                        <span className="text-yellow-600 font-semibold">⏳ 審査中</span>
+                        <span className="text-yellow-600 font-semibold">Under Review</span>
                       ) : (
-                        <span className="text-gray-500 font-semibold">📝 未提出</span>
+                        <span className="text-gray-500 font-semibold">Not Submitted</span>
                       )}
                     </p>
                   </div>

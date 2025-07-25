@@ -10,18 +10,17 @@ export function LoginFormTest() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // 👈 ログイン済み判定
-  const [checkingAuth, setCheckingAuth] = useState(true); // 初回フラグ
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const navigate = useNavigate();
 
-  // ✅ 初回チェック：ログイン済みか
   useEffect(() => {
     axiosInstance.get("/api/user")
       .then(() => {
-        setMessage("すでにログインしています。一度ログアウトしてください。");
+        setMessage("You are already logged in. Please log out first.");
         setIsLoggedIn(true);
         setCheckingAuth(false);
-        setTimeout(() => navigate("/"), 1500); // 👈 一瞬表示 → リダイレクト
+        setTimeout(() => navigate("/"), 1500);
       })
       .catch(() => {
         setIsLoggedIn(false);
@@ -40,14 +39,13 @@ export function LoginFormTest() {
       setTimeout(() => navigate('/'), 1000);
     } catch (err) {
       if (err.response?.status === 422) {
-        setMessage('入力されたユーザーは登録されていません');
+        setMessage('The entered user is not registered.');
       } else {
         setMessage('Login failed.');
       }
     }
   };
 
-  // ✅ チェック中なら何も表示しない
   if (checkingAuth) return null;
 
   return (
@@ -60,7 +58,6 @@ export function LoginFormTest() {
             <p className="text-sm text-center text-red-500">{message}</p>
           )}
 
-          {/* ✅ ログイン済みの場合はフォーム表示しない */}
           {!isLoggedIn && (
             <form onSubmit={handleSubmit} className="space-y-6">
               <Input
@@ -87,3 +84,4 @@ export function LoginFormTest() {
     </AppLayout>
   );
 }
+
