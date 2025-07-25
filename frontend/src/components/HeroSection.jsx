@@ -5,7 +5,7 @@ export function HeroSection() {
   return (
     <section className="relative h-screen bg-lumina-light-gray flex items-center justify-center text-center overflow-hidden">
   <img
-    src="../public/images/mainvisual.png"
+    src="/images/mainvisual.png"
     alt="Hero Image"
     className="absolute inset-0 w-full h-full object-cover opacity-80"
   />
