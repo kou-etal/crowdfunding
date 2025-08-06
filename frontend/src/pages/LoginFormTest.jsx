@@ -1,91 +1,132 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { axiosInstance } from '../api/axiosInstance';
-import AppLayout from '../components/AppLayout';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { axiosInstance } from "../api/axiosInstance";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import AppLayout from "../components/AppLayout";
 
 export function LoginFormTest() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
-  const [loading, setLoading] = useState(false); // ← 追加
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    axiosInstance.get("/api/user")
-      .then(() => {
-        setMessage("You are already logged in. Please log out first.");
-        setIsLoggedIn(true);
-        setCheckingAuth(false);
-        setTimeout(() => navigate("/"), 1500);
-      })
-      .catch(() => {
-        setIsLoggedIn(false);
-        setCheckingAuth(false);
-      });
-  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
-    setLoading(true); // ← ローディング開始
+    setErrors({});
+    setLoading(true);
 
     try {
-      await axiosInstance.get('/sanctum/csrf-cookie');
-      await axiosInstance.post('/login', { email, password });
-      setMessage('Log in successful.');
-      setTimeout(() => navigate('/'), 1000);
+      await axiosInstance.get("/sanctum/csrf-cookie", { withCredentials: true });
+      await axiosInstance.post(
+        "/login",
+        {
+          email,
+          password,
+          password_confirmation: password,
+        },
+        { withCredentials: true }
+      );
+      navigate("/");
     } catch (err) {
-      if (err.response?.status === 422) {
-        setMessage('The entered user is not registered.');
+      console.error("Login failed", err.response?.data);
+      if (err.response?.data?.errors) {
+        setErrors(err.response.data.errors);
       } else {
-        setMessage('Login failed.');
+        setErrors({ general: ["Invalid login credentials."] });
       }
     } finally {
-      setLoading(false); // ← ローディング終了
+      setLoading(false);
     }
   };
 
-  if (checkingAuth) return null;
-
   return (
     <AppLayout>
-      <Card className="max-w-4xl mx-auto w-full mt-20 mb-8 shadow-md">
+      <Card className="max-w-xl mx-auto mt-20 shadow-md">
         <CardContent className="p-8 space-y-6">
-          <h2 className="text-2xl font-bold">Login</h2>
+          {/* 見出し */}
+          <h1 className="text-2xl font-bold text-center text-blue-900">
+            Log in to FundMyThesis
+          </h1>
 
-          {message && (
-            <p className="text-sm text-center text-red-500">{message}</p>
-          )}
-
-          {!isLoggedIn && (
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+            aria-label="Login form"
+          >
+            {/* Email */}
+            <div>
+              <Label htmlFor="email">
+                Email Address <span className="text-red-500">*</span>
+              </Label>
               <Input
-                type="text"
+                id="email"
+                name="email"
+                type="email"
+                aria-required="true"
+                aria-describedby="email-desc"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email address"
+                placeholder="e.g. example@mail.com"
                 required
               />
+              <span id="email-desc" className="sr-only">
+                Enter a valid email address
+              </span>
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>
+              )}
+            </div>
+
+            {/* Password */}
+            <div>
+              <Label htmlFor="password">
+                Password <span className="text-red-500">*</span>
+              </Label>
               <Input
+                id="password"
+                name="password"
                 type="password"
+                aria-required="true"
+                aria-describedby="password-desc"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
+                placeholder="Enter your password"
                 required
               />
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Logging in..." : "Log in"}
-              </Button>
-            </form>
-          )}
+              <span id="password-desc" className="sr-only">
+                Enter your account password
+              </span>
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.password[0]}
+                </p>
+              )}
+            </div>
+
+            {/* エラー全般 */}
+            {errors.general && (
+              <p className="text-red-500 text-sm mt-1 text-center">
+                {errors.general[0]}
+              </p>
+            )}
+
+            {/* ボタン */}
+            <Button
+              type="submit"
+              className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Log in"}
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </AppLayout>
   );
 }
+
 

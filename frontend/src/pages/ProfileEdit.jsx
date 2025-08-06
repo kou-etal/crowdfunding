@@ -21,6 +21,7 @@ export function ProfileEdit() {
     institute: ''
   });
   const [imageFile, setImageFile] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     axiosInstance.get('/api/profile')
@@ -28,7 +29,7 @@ export function ProfileEdit() {
         const data = res.data;
         setProfile({
           name: data.name || '',
-          full_name: data.full_name || '', 
+          full_name: data.full_name || '',
           bio: data.bio || '',
           profile_image: data.profile_image || '',
           role: data.role || 'supporter',
@@ -63,6 +64,7 @@ export function ProfileEdit() {
     formData.append('image', imageFile);
 
     try {
+      setLoading(true);
       await axiosInstance.post('/api/profile-image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
@@ -70,63 +72,108 @@ export function ProfileEdit() {
       setProfile(res.data);
     } catch (err) {
       alert('Failed to upload image');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      setLoading(true);
       await axiosInstance.post('/api/profile', profile);
       alert('Profile updated successfully!');
     } catch (err) {
       alert('Failed to update profile');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <AppLayout>
-      <Card className="max-w-4xl mx-auto w-full mt-20 mb-8 shadow-md">
+      <Card className="max-w-3xl mx-auto w-full mt-20 mb-8 shadow-md">
         <CardContent className="p-8 space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Edit Profile</h2>
+          {/* タイトル */}
+          <h2 className="text-2xl font-bold text-center text-blue-900">Edit Profile</h2>
+
+          {/* 画像 + アップロード */}
+          <div className="flex flex-col items-center space-y-4">
             {profile.profile_image && (
               <img
                 src={profile.profile_image}
                 alt="Profile"
-                className="w-20 h-20 rounded-full object-cover"
+                className="w-32 h-32 rounded-full object-cover border"
               />
             )}
+            <div className="space-y-2 text-center">
+              <Label htmlFor="profile_image">Profile Image <span className="text-red-500">*</span></Label>
+              <Input
+                id="profile_image"
+                type="file"
+                onChange={handleImageChange}
+                aria-label="Select profile image"
+              />
+             <Button
+  type="button"
+  onClick={handleImageUpload}
+  className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+  disabled={loading}
+>
+  {loading ? "Uploading..." : "Upload"}
+</Button>
+
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* フォーム */}
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <Label>Profile Image:</Label>
-              <Input type="file" onChange={handleImageChange} />
-              <Button type="button" onClick={handleImageUpload} className="mt-1" variant="secondary">
-                Upload
-              </Button>
+              <Label htmlFor="name">User Name <span className="text-red-500">*</span></Label>
+              <Input
+                id="name"
+                name="name"
+                value={profile.name}
+                onChange={handleChange}
+                required
+                aria-required="true"
+              />
             </div>
 
             <div>
-              <Label>User Name:</Label>
-              <Input name="name" value={profile.name} onChange={handleChange} />
+              <Label htmlFor="full_name">Full Name <span className="text-red-500">*</span></Label>
+              <Input
+                id="full_name"
+                name="full_name"
+                value={profile.full_name}
+                onChange={handleChange}
+                required
+                aria-required="true"
+              />
             </div>
 
             <div>
-  <Label>Full Name:</Label>
-  <Input name="full_name" value={profile.full_name} onChange={handleChange} />
-</div>
-
-
-            <div>
-              <Label>Bio:</Label>
-              <Textarea className='h-90' name="bio" value={profile.bio} onChange={handleChange} />
+              <Label htmlFor="bio">Bio <span className="text-red-500">*</span></Label>
+              <Textarea
+                id="bio"
+                name="bio"
+                value={profile.bio}
+                onChange={handleChange}
+                required
+                aria-required="true"
+                className="h-32"
+              />
             </div>
 
             <div>
-              <Label>Role:</Label>
-              <Select value={profile.role} onValueChange={handleRoleChange}>
-                <SelectTrigger>
+              <Label htmlFor="role">Role <span className="text-red-500">*</span></Label>
+              <Select
+                value={profile.role}
+                onValueChange={handleRoleChange}
+                required
+                aria-required="true"
+              >
+                <SelectTrigger id="role">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -139,9 +186,14 @@ export function ProfileEdit() {
             {profile.role === 'researcher' && (
               <>
                 <div>
-                  <Label>Degree:</Label>
-                  <Select value={profile.degree} onValueChange={handleDegreeChange}>
-                    <SelectTrigger>
+                  <Label htmlFor="degree">Degree <span className="text-red-500">*</span></Label>
+                  <Select
+                    value={profile.degree}
+                    onValueChange={handleDegreeChange}
+                    required
+                    aria-required="true"
+                  >
+                    <SelectTrigger id="degree">
                       <SelectValue placeholder="Select degree" />
                     </SelectTrigger>
                     <SelectContent>
@@ -153,23 +205,52 @@ export function ProfileEdit() {
                 </div>
 
                 <div>
-                  <Label>Expertise:</Label>
-                  <Input name="expertise" value={profile.expertise} onChange={handleChange} />
+                  <Label htmlFor="expertise">Expertise <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="expertise"
+                    name="expertise"
+                    value={profile.expertise}
+                    onChange={handleChange}
+                    required
+                    aria-required="true"
+                  />
                 </div>
 
                 <div>
-                  <Label>University:</Label>
-                  <Input name="university" value={profile.university} onChange={handleChange} />
+                  <Label htmlFor="university">University <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="university"
+                    name="university"
+                    value={profile.university}
+                    onChange={handleChange}
+                    required
+                    aria-required="true"
+                  />
                 </div>
 
                 <div>
-                  <Label>Institute:</Label>
-                  <Input name="institute" value={profile.institute} onChange={handleChange} />
+                  <Label htmlFor="institute">Institute <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="institute"
+                    name="institute"
+                    value={profile.institute}
+                    onChange={handleChange}
+                    required
+                    aria-required="true"
+                  />
                 </div>
               </>
             )}
 
-            <Button type="submit" className="w-full">Save Changes</Button>
+            {/* Save ボタン */}
+         <Button
+  type="submit"
+  className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+  disabled={loading}
+>
+  {loading ? "Saving..." : "Save Changes"}
+</Button>
+
           </form>
         </CardContent>
       </Card>

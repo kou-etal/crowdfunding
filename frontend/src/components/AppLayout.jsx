@@ -177,9 +177,11 @@ export default function AppLayout({ children }) {
       </main>
 
       {/* フッター */}
-      <footer className="text-center text-sm text-gray-500 py-4 border-t">
-        © {new Date().getFullYear()} FundMyThesis. All rights reserved.
-      </footer>
+   <footer className="border-t mt-8">
+  <div className="max-w-xl mx-auto text-center text-sm text-gray-500 py-4">
+    © {new Date().getFullYear()} FundMyThesis. All rights reserved.
+  </div>
+</footer>
     </div>
   );
 }
