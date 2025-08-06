@@ -84,15 +84,19 @@ export function ProjectDetail() {
                   onChange={(e) => setAmount(e.target.value)}
                   max={project.goal_amount - project.current_amount}
                 />
-                <Button className="w-full" onClick={handleSupport} disabled={loading}>
-                  {loading ? "Processing..." : "Support this project"}
-                </Button>
+                <Button
+  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+  onClick={handleSupport}
+  disabled={loading}
+>
+  {loading ? "Processing..." : "Support this project"}
+</Button>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Right: Researcher / Supervisor Info */}
+        
         <div className="md:col-span-2">
           <Card className="bg-white/90 backdrop-blur-md shadow-md rounded-xl h-full">
             <CardContent className="p-6 space-y-6">
