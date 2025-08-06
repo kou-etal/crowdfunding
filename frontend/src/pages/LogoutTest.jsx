@@ -27,7 +27,7 @@ export function LogoutTest() {
       <Card className="w-full max-w-xl shadow-md">
         <CardContent className="p-8 space-y-6 text-center">
           <h2 className="text-2xl font-bold">{message}</h2>
-          <Button asChild className="w-full">
+          <Button asChild className="w-full bg-blue-600 text-white font-semibold hover:bg-blue-700">
             <Link to="/">Top</Link>
           </Button>
         </CardContent>

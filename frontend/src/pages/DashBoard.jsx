@@ -1,35 +1,54 @@
 import { Link } from 'react-router-dom';
 import AppLayout from '../components/AppLayout';
+import { Card, CardContent } from "@/components/ui/card";
 
 export function DashBoard() {
+  const menuItems = [
+    {
+      title: "Identity Verification Requests",
+      description: "Review and approve pending identity verification submissions.",
+      to: "/admin/verify"
+    },
+    {
+      title: "Campaign Submission Reviews",
+      description: "Review new crowdfunding campaign submissions before they go live.",
+      to: "/admin/review"
+    },
+    {
+      title: "Payout Records",
+      description: "View and manage payout requests for completed campaigns.",
+      to: "/admin/pay"
+    }
+  ];
+
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6 pb-2 pl-2">
+      <div className="max-w-3xl mx-auto px-4 py-10">
+        <h1 className="text-2xl font-bold text-center text-blue-900 mb-12">
           Admin Panel
         </h1>
 
-        <div className="pl-4 flex flex-col gap-10 mb-6">
-          <Link
-            to="/admin/verify"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-10 px-4 rounded shadow"
-          >
-            Identity Verification Requests
-          </Link>
-          <Link
-            to="/admin/review"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-10 px-4 rounded shadow"
-          >
-            Campaign Submission Reviews
-          </Link>
-          <Link
-            to="/admin/pay"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-10 px-4 rounded shadow"
-          >
-            Payout Records
-          </Link>
+        <div className="grid gap-6">
+          {menuItems.map((item, idx) => (
+            <Link
+              key={idx}
+              to={item.to}
+              aria-label={item.title}
+              className="transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-lg"
+            >
+              <Card className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg rounded-lg transition-all duration-200">
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-semibold">{item.title}</h2>
+                  <p className="text-sm text-blue-100 mt-2">
+                    {item.description}
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
         </div>
       </div>
     </AppLayout>
   );
 }
+
