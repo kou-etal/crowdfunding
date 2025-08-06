@@ -41,135 +41,130 @@ export default function AppLayout({ children }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <nav className="h-20 bg-white-500 text-blue-900 border-b border-blue-200 flex items-center justify-between px-8 shadow-lg">
-        {/* ロゴ */}
-        <div className="flex items-center">
-          <Link to="/" className="text-4xl font-extrabold text-blue-900 hover:text-blue-700 transition-colors duration-200">
-            FundMyThesis
-          </Link>
-        </div>
+   <nav className="h-20 bg-white-500 text-blue-900 border-b border-blue-200 flex items-center justify-between px-8 shadow-lg">
+  {/* 左側ロゴとロール表示 */}
+  <div className="flex flex-col items-start">
+    <Link
+      to="/"
+      className="text-4xl font-extrabold text-blue-900 hover:text-blue-700 transition-colors duration-200"
+    >
+      FundMyThesis
+    </Link>
 
-        {/* ナビゲーション */}
-        <div className="flex items-center gap-8">
-          {/* Home */}
-          <Link
-            to="/"
-            className="text-xl font-medium hover:text-blue-600 hover:underline transition-all duration-200 flex items-center"
+    {/* ログイン時のみロール表示 */}
+    {isLoggedIn && (
+      <span className="text-sm text-gray-500 italic pl-1">
+        You are a <strong>{isSupporter ? "Supporter" : "Researcher"}</strong>
+      </span>
+    )}
+  </div>
+
+  {/* ナビゲーション（右側） */}
+  <div className="flex items-center gap-8">
+    {/* Home */}
+    <Button
+      asChild
+      variant="ghost"
+      className="text-xl font-medium text-blue-900 hover:text-blue-600 hover:underline"
+    >
+      <Link to="/">Home</Link>
+    </Button>
+
+    {/* Projects（ログイン済み & 研究者のみ表示） */}
+    {isLoggedIn && !isSupporter && (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="text-xl font-medium text-blue-900 hover:text-blue-600 hover:underline"
           >
-            Home
-          </Link>
-
-          {/* Projects メニュー */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="text-xl font-medium text-blue-900 hover:bg-transparent hover:text-blue-600 hover:underline transition-all duration-200 flex items-center"
-              >
-                Projects
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-blue-100 text-blue-900 border border-blue-200 shadow-lg rounded-md overflow-hidden">
-              <DropdownMenuItem asChild>
-                <Link
-                  to={isPostDisabled ? "#" : "/post"}
-                  className={`block px-4 py-2 text-base transition-colors duration-200 ${
-                    isPostDisabled
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "hover:bg-blue-200 hover:text-blue-900"
-                  }`}
-                  title={isPostDisabled ? postTooltip : ""}
-                >
-                  Start a Project
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link
-                  to={isPostDisabled ? "#" : "/myprojects"}
-                  className={`block px-4 py-2 text-base transition-colors duration-200 ${
-                    isPostDisabled
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "hover:bg-blue-200 hover:text-blue-900"
-                  }`}
-                  title={isPostDisabled ? postTooltip : ""}
-                >
-                  MyProjectStatus
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <AdminLink />
-
-          {/* Verify Identity ボタン（条件付き表示） */}
-          {isLoggedIn && !isVerified && !isSupporter && (
-            <Button
-              asChild
-              variant="ghost"
-              className="text-xl text-red-500 font-medium hover:text-red-500 hover:underline transition-all duration-200 flex items-center"
+            Projects
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="bg-blue-100 text-blue-900 border border-blue-200 shadow-lg rounded-md overflow-hidden">
+          <DropdownMenuItem asChild>
+            <Link
+              to={isPostDisabled ? "#" : "/post"}
+              className={`block px-4 py-2 text-base transition-colors duration-200 ${
+                isPostDisabled
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "hover:bg-blue-200 hover:text-blue-900"
+              }`}
+              title={isPostDisabled ? postTooltip : ""}
             >
-              <Link to="/verify">Identity Verification</Link>
-            </Button>
-          )}
+              New Project
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link
+              to={isPostDisabled ? "#" : "/myprojects"}
+              className={`block px-4 py-2 text-base transition-colors duration-200 ${
+                isPostDisabled
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "hover:bg-blue-200 hover:text-blue-900"
+              }`}
+              title={isPostDisabled ? postTooltip : ""}
+            >
+              My Projects
+            </Link>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )}
 
-          {/* ログイン状態で表示内容切替 */}
-          {isLoggedIn ? (
-            // ログイン時のみ Profile ドロップダウン
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="text-xl font-medium text-blue-900 hover:bg-transparent hover:text-blue-600 hover:underline transition-all duration-200 flex items-center"
-                >
-                  Profile
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-blue-100 text-blue-900 border border-blue-200 shadow-lg rounded-md overflow-hidden">
-                <DropdownMenuItem asChild>
-                  <Link
-                    to={isEditDisabled ? "#" : "/edit"}
-                    className={`block px-4 py-2 text-base transition-colors duration-200 ${
-                      isEditDisabled
-                        ? "text-gray-400 cursor-not-allowed"
-                        : "hover:bg-blue-200 hover:text-blue-900"
-                    }`}
-                    title={isEditDisabled ? "Please log in" : ""}
-                  >
-                    Edit profile
-                  </Link>
-                </DropdownMenuItem>
-                {/* Identity Verification はここから削除 */}
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/logout"
-                    className="block px-4 py-2 text-base hover:bg-blue-200 hover:text-blue-900 transition-colors duration-200"
-                  >
-                    Log out
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            // 未ログイン時は Sign up / Log in
-            <div className="flex gap-4">
-              <Button
-                asChild
-                variant="ghost"
-                className="text-xl font-medium text-blue-900 hover:text-blue-600 hover:underline"
-              >
-                <Link to="/register">Sign up</Link>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="text-xl font-medium text-blue-900 hover:text-blue-600 hover:underline"
-              >
-                <Link to="/login">Log in</Link>
-              </Button>
-            </div>
-          )}
-        </div>
-      </nav>
+    {/* Admin */}
+    <AdminLink />
+
+    {/* Verify Identity */}
+    {isLoggedIn && !isVerified && !isSupporter && (
+      <Button
+        asChild
+        variant="ghost"
+        className="text-xl text-red-500 font-medium hover:text-red-500 hover:underline"
+      >
+        <Link to="/verify">Verify Your Account</Link>
+      </Button>
+    )}
+
+    {/* ログイン・ログアウト系 */}
+    {isLoggedIn ? (
+      <>
+        <Button
+          asChild
+          variant="ghost"
+          className="text-xl font-medium text-blue-900 hover:text-blue-600 hover:underline"
+        >
+          <Link to="/edit">Edit profile</Link>
+        </Button>
+        <Button
+          asChild
+          variant="ghost"
+          className="text-xl font-medium text-blue-900 hover:text-blue-600 hover:underline"
+        >
+          <Link to="/logout">Log out</Link>
+        </Button>
+      </>
+    ) : (
+      <>
+        <Button
+          asChild
+          variant="ghost"
+          className="text-xl font-medium text-blue-900 hover:text-blue-600 hover:underline"
+        >
+          <Link to="/register">Sign up</Link>
+        </Button>
+        <Button
+          asChild
+          variant="ghost"
+          className="text-xl font-medium text-blue-900 hover:text-blue-600 hover:underline"
+        >
+          <Link to="/login">Log in</Link>
+        </Button>
+      </>
+    )}
+  </div>
+</nav>
+
 
       {/* モバイルメニュー */}
       <div className="md:hidden">
@@ -188,4 +183,5 @@ export default function AppLayout({ children }) {
     </div>
   );
 }
+
 
