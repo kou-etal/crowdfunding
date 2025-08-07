@@ -25,7 +25,7 @@ const ProjectCard = ({ project }) => {
         />
         {daysRemaining && (
           <div className={`absolute top-2 right-2 text-white text-sm px-3 py-1 rounded-full font-bold ${daysRemaining === 'Ended' ? 'bg-gray-600' : 'bg-blue-900'}`}>
-            {daysRemaining}
+             <span>{daysRemaining} left</span>
           </div>
         )}
       </div>
