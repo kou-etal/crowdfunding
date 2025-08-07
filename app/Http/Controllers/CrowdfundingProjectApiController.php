@@ -14,9 +14,9 @@ class CrowdfundingProjectApiController extends Controller
     public function store(Request $request)
 {
     $validated = $request->validate([
-        'title' => 'required|string|max:255',
+        'title' => 'required|string|max:60',
         'description' => 'required|string|max:5000',
-        'goal_amount' => 'required|integer|min:10',
+        'goal_amount' => 'required|integer|min:10|max:1000000',
         'deadline' => 'required|date|after:today',
         'image_path' => 'nullable|string|max:1000', // ← URLとして受け取る
     ]);

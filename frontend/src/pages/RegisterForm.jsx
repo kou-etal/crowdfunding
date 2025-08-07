@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { axiosInstance } from "../api/axiosInstance";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,14 +15,20 @@ export function RegisterForm() {
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [passwordTooShort, setPasswordTooShort] = useState(false);
+
   const navigate = useNavigate();
+
+  // リアルタイムでパスワード長を監視
+  useEffect(() => {
+    setPasswordTooShort(password.length > 0 && password.length < 8);
+  }, [password]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
     setLoading(true);
 
-    // パスワード確認チェック
     if (password !== passwordConfirm) {
       setErrors({ password_confirmation: ["Passwords do not match."] });
       setLoading(false);
@@ -47,6 +53,15 @@ export function RegisterForm() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        navigate("/");
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [message, navigate]);
 
   return (
     <AppLayout>
@@ -122,6 +137,11 @@ export function RegisterForm() {
               <span id="password-desc" className="sr-only">
                 Enter a strong password with at least 8 characters
               </span>
+              {passwordTooShort && (
+                <p className="text-red-500 text-sm mt-1">
+                  Password must be at least 8 characters long.
+                </p>
+              )}
               {errors.password && (
                 <p className="text-red-500 text-sm mt-1">{errors.password[0]}</p>
               )}
@@ -167,5 +187,3 @@ export function RegisterForm() {
     </AppLayout>
   );
 }
-
-

@@ -5,10 +5,12 @@ import AppLayout from '../components/AppLayout';
 import ProjectCard from '../components/ProjectCard';
 import { HeroSection } from '../components/HeroSection';
 import { MissionSection } from '../components/MissionSection';
+import { useLocation } from 'react-router-dom';
 
 export function CrowdfundingProjectList() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+   const location = useLocation();
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -25,15 +27,22 @@ export function CrowdfundingProjectList() {
     fetchProjects();
   }, []);
 
+  
+
+
   return (
     <AppLayout>
       <HeroSection />
       <MissionSection />
       
-      {/* 見出し */}
+  
+  {/* Explore Projects セクション */}
+
       <h1 className="text-4xl md:text-5xl text-center text-cf-science-blue pt-12 pb-8">
         Support the Researchers of Tomorrow!
       </h1>
+      <section id="explore" className="scroll-mt-24">
+     </section>
 
       {/* プロジェクト一覧 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 px-6 pb-20">
@@ -51,6 +60,7 @@ export function CrowdfundingProjectList() {
             ))
         )}
       </div>
+      
     </AppLayout>
   );
 }

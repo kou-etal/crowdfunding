@@ -1,3 +1,4 @@
+// ProfileEdit.jsx
 import { useEffect, useState } from 'react';
 import { axiosInstance } from '../api/axiosInstance';
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AppLayout from '../components/AppLayout';
+import { useNavigate } from 'react-router-dom';
 
 export function ProfileEdit() {
   const [profile, setProfile] = useState({
@@ -22,6 +24,7 @@ export function ProfileEdit() {
   });
   const [imageFile, setImageFile] = useState(null);
   const [loading, setLoading] = useState(false);
+   const navigate = useNavigate();
 
   useEffect(() => {
     axiosInstance.get('/api/profile')
@@ -83,6 +86,7 @@ export function ProfileEdit() {
       setLoading(true);
       await axiosInstance.post('/api/profile', profile);
       alert('Profile updated successfully!');
+      navigate("/");
     } catch (err) {
       alert('Failed to update profile');
     } finally {
@@ -94,10 +98,8 @@ export function ProfileEdit() {
     <AppLayout>
       <Card className="max-w-3xl mx-auto w-full mt-20 mb-8 shadow-md">
         <CardContent className="p-8 space-y-6">
-          {/* タイトル */}
           <h2 className="text-2xl font-bold text-center text-blue-900">Edit Profile</h2>
 
-          {/* 画像 + アップロード */}
           <div className="flex flex-col items-center space-y-4">
             {profile.profile_image && (
               <img
@@ -114,19 +116,18 @@ export function ProfileEdit() {
                 onChange={handleImageChange}
                 aria-label="Select profile image"
               />
-             <Button
-  type="button"
-  onClick={handleImageUpload}
-  className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
-  disabled={loading}
->
-  {loading ? "Uploading..." : "Upload"}
-</Button>
-
+              <p className="text-sm text-gray-500">Upload a clear face photo.</p>
+              <Button
+                type="button"
+                onClick={handleImageUpload}
+                className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                disabled={loading}
+              >
+                {loading ? "Uploading..." : "Upload"}
+              </Button>
             </div>
           </div>
 
-          {/* フォーム */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <Label htmlFor="name">User Name <span className="text-red-500">*</span></Label>
@@ -136,8 +137,9 @@ export function ProfileEdit() {
                 value={profile.name}
                 onChange={handleChange}
                 required
-                aria-required="true"
+                placeholder="e.g. john"
               />
+              
             </div>
 
             <div>
@@ -148,8 +150,9 @@ export function ProfileEdit() {
                 value={profile.full_name}
                 onChange={handleChange}
                 required
-                aria-required="true"
+                placeholder="e.g. John Doe"
               />
+              <p className="text-sm text-gray-500">Enter your full legal name.</p>
             </div>
 
             <div>
@@ -160,9 +163,10 @@ export function ProfileEdit() {
                 value={profile.bio}
                 onChange={handleChange}
                 required
-                aria-required="true"
                 className="h-32"
+                placeholder="Tell us about yourself, your goals, or research interest..."
               />
+              <p className="text-sm text-gray-500">Max 2000 characters</p>
             </div>
 
             <div>
@@ -171,16 +175,18 @@ export function ProfileEdit() {
                 value={profile.role}
                 onValueChange={handleRoleChange}
                 required
-                aria-required="true"
               >
                 <SelectTrigger id="role">
-                  <SelectValue placeholder="Select role" />
+                  <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="supporter">Supporter</SelectItem>
                   <SelectItem value="researcher">Researcher</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-sm text-gray-500">Choose "Researcher" if you plan to post campaigns.
+                Researchers are required to complete identity verification, which includes providing your supervisor's full name, affiliation, and email address.*
+              </p>
             </div>
 
             {profile.role === 'researcher' && (
@@ -191,10 +197,9 @@ export function ProfileEdit() {
                     value={profile.degree}
                     onValueChange={handleDegreeChange}
                     required
-                    aria-required="true"
                   >
                     <SelectTrigger id="degree">
-                      <SelectValue placeholder="Select degree" />
+                      <SelectValue placeholder="Select your degree" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="修士">Master's</SelectItem>
@@ -202,6 +207,7 @@ export function ProfileEdit() {
                       <SelectItem value="その他">Other</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-sm text-gray-500">Your current academic degree.</p>
                 </div>
 
                 <div>
@@ -212,8 +218,9 @@ export function ProfileEdit() {
                     value={profile.expertise}
                     onChange={handleChange}
                     required
-                    aria-required="true"
+                    placeholder="e.g. Biomedical Engineering"
                   />
+                  <p className="text-sm text-gray-500">Field of research or academic expertise.</p>
                 </div>
 
                 <div>
@@ -224,7 +231,7 @@ export function ProfileEdit() {
                     value={profile.university}
                     onChange={handleChange}
                     required
-                    aria-required="true"
+                    placeholder="e.g. University of Tokyo"
                   />
                 </div>
 
@@ -236,21 +243,19 @@ export function ProfileEdit() {
                     value={profile.institute}
                     onChange={handleChange}
                     required
-                    aria-required="true"
+                    placeholder="e.g. Graduate School of Engineering"
                   />
                 </div>
               </>
             )}
 
-            {/* Save ボタン */}
-         <Button
-  type="submit"
-  className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
-  disabled={loading}
->
-  {loading ? "Saving..." : "Save Changes"}
-</Button>
-
+            <Button
+              type="submit"
+              className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              disabled={loading}
+            >
+              {loading ? "Saving..." : "Save Changes"}
+            </Button>
           </form>
         </CardContent>
       </Card>

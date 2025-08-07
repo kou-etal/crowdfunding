@@ -85,8 +85,8 @@ public function updateIntroduction(Request $request)
 {
     $validated = $request->validate([
         'name' => 'string|max:255',
-        'full_name' => 'nullable|string|max:255', // ✅ フルネーム追加
-        'bio' => 'nullable|string',
+        'full_name' => 'nullable|string|max:255', // フルネーム追加
+        'bio' => 'nullable|string|max:2000',
         'role' => 'required|in:researcher,supporter',
         'degree' => 'nullable|string|in:修士,博士,その他',
         'expertise' => 'nullable|string|max:255',
@@ -94,7 +94,7 @@ public function updateIntroduction(Request $request)
         'institute' => 'nullable|string|max:255',
     ]);
 
-    // ✅ 研究者なら学歴情報など必須チェック
+    // 研究者なら学歴情報など必須チェック
     if ($validated['role'] === 'researcher') {
         foreach (['degree', 'expertise', 'university', 'institute'] as $field) {
             if (empty($validated[$field])) {

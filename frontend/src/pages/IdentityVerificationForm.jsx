@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import AppLayout from "../components/AppLayout";
+import { useNavigate } from 'react-router-dom';
 
 export function IdentityVerificationForm() {
   const [form, setForm] = useState({
@@ -88,6 +89,7 @@ export function IdentityVerificationForm() {
       });
 
       alert("Submission completed successfully!");
+      navigate('/');
     } catch (err) {
       console.error("Submission failed", err.response?.data || err);
       alert("Failed to submit. Please try again.");
