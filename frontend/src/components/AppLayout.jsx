@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { axiosInstance } from "../api/axiosInstance";
 import { Link } from "react-router-dom";
 import {
@@ -14,6 +15,8 @@ import MobileMenu from "./MobileMenu";
 export default function AppLayout({ children }) {
   const [user, setUser] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+    const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     axiosInstance
@@ -33,6 +36,24 @@ export default function AppLayout({ children }) {
   const isLoggedIn = !!user;
   const isSupporter = user?.role === "supporter";
   const isVerified = user?.is_verified == 1;
+
+    const handleExploreClick = () => {
+    if (location.pathname !== "/") {
+      navigate("/", { replace: false });
+      // 遷移完了後にscrollIntoViewを待つ
+      setTimeout(() => {
+        const el = document.getElementById("explore");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 300); // 描画待ち用に少し余裕
+    } else {
+      const el = document.getElementById("explore");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
 
   let isPostDisabled = true;
   let postTooltip = "";
@@ -78,23 +99,15 @@ export default function AppLayout({ children }) {
               <Link to="/">Home</Link>
             </Button>
 
-            {(!isLoggedIn || isSupporter) && (
-              <Button
-                onClick={() => {
-                  window.history.pushState({}, "", "/#explore");
-                  setTimeout(() => {
-                    const el = document.getElementById("explore");
-                    if (el) {
-                      el.scrollIntoView({ behavior: "smooth" });
-                    }
-                  }, 100);
-                }}
-                variant="ghost"
-                className="text-xl font-medium text-blue-900 hover:text-blue-600 hover:underline"
-              >
-                Explore Projects
-              </Button>
-            )}
+           {(!isLoggedIn || isSupporter) && (
+      <Button
+        onClick={handleExploreClick}
+        variant="ghost"
+        className="text-xl font-medium text-blue-900 hover:text-blue-600 hover:underline"
+      >
+        Explore Projects
+      </Button>
+    )}
 
             {isLoggedIn && !isSupporter && (
               <DropdownMenu>

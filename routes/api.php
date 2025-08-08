@@ -14,6 +14,10 @@ use App\Http\Controllers\CrowdfundingSupportApiController;
 use App\Http\Controllers\IdentityVerificationApiController;
 use App\Http\Controllers\IdentityVerificationAdminController;
 use App\Http\Controllers\PayoutRecordApiController;
+use App\Http\Controllers\PayPalWebhookController;
+
+Route::post('/paypal/webhook', [PayPalWebhookController::class, 'handleWebhook']);
+
 
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
     Route::get('/identity-verifications', [IdentityVerificationAdminController::class, 'index']);
@@ -28,8 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 Route::middleware('auth:sanctum')->group(function () {
-    // 支援セッション作成（Stripe Checkout）
-    Route::post('/crowdfunding-supports/session', [CrowdfundingSupportApiController::class, 'createSession']);
+    Route::post('/crowdfunding-supports/session', [CrowdfundingSupportApiController::class, 'createPaypalSession']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -101,7 +104,7 @@ Route::get('/email/verify/{id}/{hash}',VerifyEmailController::class)
     ->name('verification.verify');
 
 
-Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
 
-Route::middleware('auth:sanctum')->post('/paid-posts/checkout', [PaidPostApiController::class, 'checkout']);
+
+
 Route::post('/crowdfunding-projects/image', [CrowdfundingProjectApiController::class, 'uploadProjectImage']);
