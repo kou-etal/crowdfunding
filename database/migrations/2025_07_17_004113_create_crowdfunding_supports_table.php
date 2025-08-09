@@ -10,14 +10,30 @@ return new class extends Migration {
         Schema::create('crowdfunding_supports', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // 支援者
-            $table->foreignId('project_id')->constrained('crowdfunding_projects')->onDelete('cascade'); // プロジェクト
-            $table->integer('amount'); // 支援金額
+            // 支援者
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
 
-            $table->string('stripe_session_id')->unique(); // Stripe セッションID（重複防止）
-            $table->timestamp('supported_at'); // 支援完了日時
+            // プロジェクト
+            $table->foreignId('project_id')
+                  ->constrained('crowdfunding_projects')
+                  ->onDelete('cascade');
 
-            $table->timestamps(); // created_at, updated_at
+            // 金額・通貨
+            $table->integer('amount');
+            $table->string('currency', 3)->default('JPY');
+
+            // 支払い情報
+            $table->string('payment_id', 100)->nullable()->unique(); // PayPal取引ID
+            $table->string('provider', 20)->default('paypal'); // 'paypal'固定
+            $table->string('stripe_session_id')->nullable();   // 将来用
+
+            // 完了日時
+            $table->timestamp('supported_at')->nullable();
+
+            // Webhookレスポンス等のJSON
+            $table->json('raw_payload')->nullable();
+
+            $table->timestamps();
         });
     }
 
@@ -26,3 +42,4 @@ return new class extends Migration {
         Schema::dropIfExists('crowdfunding_supports');
     }
 };
+

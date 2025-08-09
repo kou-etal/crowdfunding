@@ -4,84 +4,120 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Stripe\Stripe;
-use Stripe\Checkout\Session;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Models\CrowdfundingSupport;
 use App\Models\CrowdfundingProject;
-
-
 
 class CrowdfundingSupportApiController extends Controller
 {
-
-public function createPaypalSession(Request $request)
-{
-    $request->validate([
-        'project_id' => 'required|exists:crowdfunding_projects,id',
-        'amount'     => 'required|integer|min:100',
-    ]);
-
-    $user = $request->user();
-    $project = CrowdfundingProject::findOrFail($request->project_id);
-
-    // PayPal API キーを設定（configに書いてもOK）
-    $clientId = env('PAYPAL_CLIENT_ID');
-    $secret   = env('PAYPAL_SECRET');
-
-    $accessToken = $this->getPaypalAccessToken($clientId, $secret);
-
-    $order = $this->createPaypalOrder($accessToken, [
-        'amount'     => $request->amount,
-        'user_id'    => $user->id,
-        'project_id' => $project->id,
-        'title'      => $project->title,
-    ]);
-
-    $approvalUrl = collect($order['links'])->firstWhere('rel', 'approve')['href'];
-
-    return response()->json(['url' => $approvalUrl]);
-}
-private function getPaypalAccessToken($clientId, $secret)
-{
-    $response = \Http::withBasicAuth($clientId, $secret)
-        ->asForm()
-        ->post('https://api-m.sandbox.paypal.com/v1/oauth2/token', [
-            'grant_type' => 'client_credentials',
+    /**
+     * 支援セッション作成（PayPal）
+     * 返り値: 承認URLにリダイレクトするための { url }
+     */
+    public function createPaypalSession(Request $request)
+    {
+        $request->validate([
+            'project_id' => 'required|exists:crowdfunding_projects,id',
+            'amount'     => 'required|integer|min:100',
         ]);
 
-    if (!$response->successful()) {
-        Log::error('PayPal Access Token Error', ['response' => $response->body()]);
-        abort(500, 'PayPal認証に失敗しました');
+        $user    = $request->user();
+        $project = CrowdfundingProject::findOrFail($request->project_id);
+
+        $clientId = config('services.paypal.client_id');
+        $secret   = config('services.paypal.secret');
+
+        if (!$clientId || !$secret) {
+            Log::error('PayPal credentials missing');
+            abort(500, 'PayPal credentials not set.');
+        }
+
+        $accessToken = $this->getPaypalAccessToken($clientId, $secret);
+
+        $order = $this->createPaypalOrder($accessToken, [
+            'amount'     => (int) $request->amount,   // JPYは整数
+            'user_id'    => (int) $user->id,
+            'project_id' => (int) $project->id,
+            'title'      => $project->title,
+        ]);
+
+        $approvalUrl = collect($order['links'] ?? [])->firstWhere('rel', 'approve')['href'] ?? null;
+
+        if (!$approvalUrl) {
+            Log::error('PayPal approval URL not found', ['order' => $order]);
+            abort(500, 'Failed to create PayPal order.');
+        }
+
+        return response()->json(['url' => $approvalUrl]);
     }
 
-    return $response->json()['access_token'];
-}
+    /**
+     * PayPal アクセストークン取得
+     */
+    private function getPaypalAccessToken(string $clientId, string $secret): string
+    {
+        $base = $this->paypalBase();
 
-private function createPaypalOrder($accessToken, array $data)
-{
-    $response = \Http::withToken($accessToken)
-        ->post('https://api-m.sandbox.paypal.com/v2/checkout/orders', [
+        $res = Http::withBasicAuth($clientId, $secret)
+            ->asForm()
+            ->post("{$base}/v1/oauth2/token", [
+                'grant_type' => 'client_credentials',
+            ]);
+
+        if (!$res->successful()) {
+            Log::error('PayPal Access Token Error', ['status' => $res->status(), 'body' => $res->body()]);
+            abort(500, 'PayPal認証に失敗しました');
+        }
+
+        return $res->json('access_token');
+    }
+
+    /**
+     * PayPal 注文作成
+     */
+    private function createPaypalOrder(string $accessToken, array $data): array
+    {
+        $base = $this->paypalBase();
+
+        // JPYは小数不可。値は文字列で送るのが安全
+        $amountValue = (string) $data['amount'];
+
+        $payload = [
             'intent' => 'CAPTURE',
             'purchase_units' => [[
                 'amount' => [
                     'currency_code' => 'JPY',
-                    'value' => number_format($data['amount'] / 100, 2, '.', ''), // PayPalは小数表記
+                    'value' => $amountValue,
                 ],
+                // 後でwebhookで誰の/どのプロジェクトか判別
                 'custom_id' => "{$data['user_id']}:{$data['project_id']}",
             ]],
             'application_context' => [
-                'return_url' => env('FRONTEND_URL') . '/success',
-                'cancel_url' => env('FRONTEND_URL') . '/cancel',
+                // ここは表示用。成功/キャンセルの処理はサーバのwebhookで行う
+                'return_url' => rtrim(config('app.frontend_url'), '/') . '/success',
+                'cancel_url' => rtrim(config('app.frontend_url'), '/') . '/cancel',
+                // 任意：UIの微調整
+                'shipping_preference' => 'NO_SHIPPING',
+                'user_action' => 'PAY_NOW',
             ],
-        ]);
+        ];
 
-    if (!$response->successful()) {
-        Log::error('PayPal Order Create Error', ['response' => $response->body()]);
-        abort(500, 'PayPal注文の作成に失敗しました');
+        $res = Http::withToken($accessToken)->post("{$base}/v2/checkout/orders", $payload);
+
+        if (!$res->successful()) {
+            Log::error('PayPal Order Create Error', ['status' => $res->status(), 'body' => $res->body()]);
+            abort(500, 'PayPal注文の作成に失敗しました');
+        }
+
+        return $res->json();
     }
 
-    return $response->json();
-}
-
+    /**
+     * サンドボックス/本番のベースURL
+     * .env の PAYPAL_BASE で上書き可（例: https://api-m.paypal.com）
+     */
+    private function paypalBase(): string
+    {
+        return rtrim(config('services.paypal.base', 'https://api-m.sandbox.paypal.com'), '/');
+    }
 }

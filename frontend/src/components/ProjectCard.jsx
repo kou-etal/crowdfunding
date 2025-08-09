@@ -2,10 +2,7 @@ import React from 'react';
 import { Progress } from './ui/progress';
 
 const ProjectCard = ({ project }) => {
-  const calculatedProgress = project.progress_percent
-    ? Math.min(Math.round(project.progress_percent), 100)
-    : 0;
-
+  // 残り日数計算
   const daysRemaining = (() => {
     if (!project.deadline) return null;
     const deadlineDate = new Date(project.deadline);
@@ -13,6 +10,25 @@ const ProjectCard = ({ project }) => {
     const diff = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
     return diff < 0 ? 'Ended' : `${diff} days`;
   })();
+
+  // 達成率計算
+  const calculatedProgress = project.progress_percent
+    ? Math.min(Math.round(project.progress_percent), 100)
+    : (() => {
+        const total = Number(project.total_amount ?? project.supports_sum_amount ?? project.current_amount ?? 0);
+        const goal = Number(project.goal_amount ?? Infinity);
+        return goal > 0 ? Math.min(Math.round((total / goal) * 100), 100) : 0;
+      })();
+
+  // 表示可否（期限切れや達成済みを除外）
+  const now = new Date();
+  const deadlineOk = !project.deadline || new Date(project.deadline) >= now;
+  const total = Number(project.total_amount ?? project.supports_sum_amount ?? project.current_amount ?? 0);
+  const goal = Number(project.goal_amount ?? Infinity);
+  const reached = total >= goal;
+  if (!deadlineOk || reached) {
+    return null; // 表示しない
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden relative group">
@@ -24,8 +40,12 @@ const ProjectCard = ({ project }) => {
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
         {daysRemaining && (
-          <div className={`absolute top-2 right-2 text-white text-sm px-3 py-1 rounded-full font-bold ${daysRemaining === 'Ended' ? 'bg-gray-600' : 'bg-blue-900'}`}>
-             <span>{daysRemaining} left</span>
+          <div
+            className={`absolute top-2 right-2 text-white text-sm px-3 py-1 rounded-full font-bold ${
+              daysRemaining === 'Ended' ? 'bg-gray-600' : 'bg-blue-900'
+            }`}
+          >
+            <span>{daysRemaining} left</span>
           </div>
         )}
       </div>
@@ -33,13 +53,12 @@ const ProjectCard = ({ project }) => {
       <div className="p-5">
         {/* Avatar and Owner name */}
         <div className="flex items-center gap-3 mb-4 mt-2 ml-2 relative z-10">
-
           <img
             src={project.ownerAvatarUrl}
             alt={project.ownerName}
             className="w-16 h-16 rounded-full border-2 border-white shadow-md bg-gray-300 object-cover"
           />
-          <p className="text-lg font-bold text-blue-800">{project.ownerName || "Project Owner"}</p>
+          <p className="text-lg font-bold text-blue-800">{project.ownerName || 'Project Owner'}</p>
         </div>
 
         {/* Title and description */}
@@ -57,7 +76,7 @@ const ProjectCard = ({ project }) => {
               Goal: {project.goal_amount ? `$${project.goal_amount.toLocaleString()}` : 'N/A'}
             </span>
             <span className="text-blue-900 text-xl font-bold">
-              {project.currentAmount ? `$${project.currentAmount.toLocaleString()}` : '$0'}
+              {total ? `$${total.toLocaleString()}` : '$0'}
             </span>
           </div>
           <Progress

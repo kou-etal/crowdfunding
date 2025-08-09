@@ -43,5 +43,11 @@ return [
     'secret' => env('STRIPE_SECRET'),
     'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
 ],
+'paypal' => [
+    'client_id' => env('PAYPAL_CLIENT_ID'),
+    'secret'    => env('PAYPAL_SECRET'),
+    // 本番切替は .env の PAYPAL_BASE で
+    'base'      => env('PAYPAL_BASE', 'https://api-m.sandbox.paypal.com'),
+],
 
 ];

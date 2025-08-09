@@ -41,10 +41,12 @@ export function AdminPayoutRecords() {
             <Card key={record.id}>
               <CardContent className="p-6 space-y-3">
                 <p><strong>Project ID:</strong> {record.project_id}</p>
+                <p><strong>Project Title:</strong> {record.project?.title ?? '-'}</p>
                 <p><strong>Researcher:</strong> {record.user_full_name} ({record.user_email})</p>
+                <p><strong>Goal Amount:</strong> ¥{Number(record.project?.goal_amount ?? 0).toLocaleString()}</p>
                 <p><strong>Total Support Amount:</strong> ¥{record.total_amount.toLocaleString()}</p>
                 <p><strong>Platform Fee:</strong> ¥{record.platform_fee.toLocaleString()}</p>
-                <p><strong>Ready At:</strong> {record.payout_ready_at}</p>
+                
 
                 <Button
                   variant={record.is_paid ? "secondary" : "default"}
@@ -61,3 +63,4 @@ export function AdminPayoutRecords() {
     </AppLayout>
   );
 }
+//<p><strong>Ready At:</strong> {record.payout_ready_at}</p>
