@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import AppLayout from "../components/AppLayout";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 
 export function IdentityVerificationForm() {
+  const navigate = useNavigate(); // ★ 追加
+
   const [form, setForm] = useState({
     supervisor_name: "",
     supervisor_email: "",
@@ -19,46 +21,33 @@ export function IdentityVerificationForm() {
   const [faceImage, setFaceImage] = useState(null);
   const [docImage, setDocImage] = useState(null);
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // 二重送信ガードにも使う
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleCheckboxChange = (checked) => {
-    setForm((prev) => ({ ...prev, honor_statement: checked }));
+    setForm((prev) => ({ ...prev, honor_statement: !!checked }));
   };
 
   const validateForm = () => {
     const newErrors = {};
-
-    // 両方必須に変更
-    if (!faceImage) {
-      newErrors.faceImage = "Face photo is required.";
-    }
-    if (!docImage) {
-      newErrors.docImage = "Identification document photo is required.";
-    }
-
-    if (!form.supervisor_name.trim()) {
-      newErrors.supervisor_name = "Supervisor's name is required.";
-    }
-    if (!form.supervisor_email.trim()) {
-      newErrors.supervisor_email = "Supervisor's email is required.";
-    }
-    if (!form.supervisor_affiliation.trim()) {
-      newErrors.supervisor_affiliation = "Supervisor's affiliation is required.";
-    }
-    if (!form.honor_statement) {
-      newErrors.honor_statement = "You must agree to the honor statement.";
-    }
-
+    if (!faceImage) newErrors.faceImage = "Face photo is required.";
+    if (!docImage) newErrors.docImage = "Identification document photo is required.";
+    if (!form.supervisor_name.trim()) newErrors.supervisor_name = "Supervisor's name is required.";
+    if (!form.supervisor_email.trim()) newErrors.supervisor_email = "Supervisor's email is required.";
+    if (!form.supervisor_affiliation.trim()) newErrors.supervisor_affiliation = "Supervisor's affiliation is required.";
+    if (!form.honor_statement) newErrors.honor_statement = "You must agree to the honor statement.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ★ 二重送信の早期リターン
+    if (loading) return;
     if (!validateForm()) return;
 
     setLoading(true);
@@ -71,9 +60,7 @@ export function IdentityVerificationForm() {
       const uploadRes = await axiosInstance.post(
         "/api/identity-verification/upload-images",
         imageForm,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
 
       const { face_image_url, document_image_url } = uploadRes.data;
@@ -88,10 +75,15 @@ export function IdentityVerificationForm() {
         supervisor_affiliation: form.supervisor_affiliation,
       });
 
-      alert("Submission completed successfully!");
-      navigate('/');
+      // ★ 文言を丁寧に
+      alert(
+        "Submission completed successfully!\n\n" +
+        "Your request has been received. Please wait while we review and approve your verification."
+      );
+
+      navigate("/"); // ★ ここでエラーになっていた
     } catch (err) {
-      console.error("Submission failed", err.response?.data || err);
+      console.error("Submission failed", err?.response?.data || err);
       alert("Failed to submit. Please try again.");
     } finally {
       setLoading(false);
@@ -114,11 +106,8 @@ export function IdentityVerificationForm() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 顔写真 */}
             <div>
-              <Label htmlFor="faceImage">
-                Face photo<span className="text-red-500">*</span>
-              </Label>
+              <Label htmlFor="faceImage">Face photo<span className="text-red-500">*</span></Label>
               <Input
                 id="faceImage"
                 type="file"
@@ -126,16 +115,11 @@ export function IdentityVerificationForm() {
                 onChange={(e) => setFaceImage(e.target.files?.[0] || null)}
                 required
               />
-              {errors.faceImage && (
-                <p className="text-red-500 text-sm mt-1">{errors.faceImage}</p>
-              )}
+              {errors.faceImage && <p className="text-red-500 text-sm mt-1">{errors.faceImage}</p>}
             </div>
 
-            {/* 本人確認書類 */}
             <div>
-              <Label htmlFor="docImage">
-                Photo of your identification document <span className="text-red-500">*</span>
-              </Label>
+              <Label htmlFor="docImage">Photo of your identification document <span className="text-red-500">*</span></Label>
               <Input
                 id="docImage"
                 type="file"
@@ -143,16 +127,11 @@ export function IdentityVerificationForm() {
                 onChange={(e) => setDocImage(e.target.files?.[0] || null)}
                 required
               />
-              {errors.docImage && (
-                <p className="text-red-500 text-sm mt-1">{errors.docImage}</p>
-              )}
+              {errors.docImage && <p className="text-red-500 text-sm mt-1">{errors.docImage}</p>}
             </div>
 
-            {/* Supervisor Name */}
             <div>
-              <Label htmlFor="supervisor_name">
-                Supervisor's Full Name <span className="text-red-500">*</span>
-              </Label>
+              <Label htmlFor="supervisor_name">Supervisor's Full Name <span className="text-red-500">*</span></Label>
               <Input
                 id="supervisor_name"
                 name="supervisor_name"
@@ -160,16 +139,11 @@ export function IdentityVerificationForm() {
                 onChange={handleChange}
                 required
               />
-              {errors.supervisor_name && (
-                <p className="text-red-500 text-sm mt-1">{errors.supervisor_name}</p>
-              )}
+              {errors.supervisor_name && <p className="text-red-500 text-sm mt-1">{errors.supervisor_name}</p>}
             </div>
 
-            {/* Supervisor Email */}
             <div>
-              <Label htmlFor="supervisor_email">
-                Supervisor's Email Address <span className="text-red-500">*</span>
-              </Label>
+              <Label htmlFor="supervisor_email">Supervisor's Email Address <span className="text-red-500">*</span></Label>
               <Input
                 id="supervisor_email"
                 name="supervisor_email"
@@ -178,16 +152,11 @@ export function IdentityVerificationForm() {
                 onChange={handleChange}
                 required
               />
-              {errors.supervisor_email && (
-                <p className="text-red-500 text-sm mt-1">{errors.supervisor_email}</p>
-              )}
+              {errors.supervisor_email && <p className="text-red-500 text-sm mt-1">{errors.supervisor_email}</p>}
             </div>
 
-            {/* Supervisor Affiliation */}
             <div>
-              <Label htmlFor="supervisor_affiliation">
-                Supervisor's Affiliation <span className="text-red-500">*</span>
-              </Label>
+              <Label htmlFor="supervisor_affiliation">Supervisor's Affiliation <span className="text-red-500">*</span></Label>
               <Input
                 id="supervisor_affiliation"
                 name="supervisor_affiliation"
@@ -195,12 +164,9 @@ export function IdentityVerificationForm() {
                 onChange={handleChange}
                 required
               />
-              {errors.supervisor_affiliation && (
-                <p className="text-red-500 text-sm mt-1">{errors.supervisor_affiliation}</p>
-              )}
+              {errors.supervisor_affiliation && <p className="text-red-500 text-sm mt-1">{errors.supervisor_affiliation}</p>}
             </div>
 
-            {/* Honor Statement */}
             <div className="flex items-start space-x-2">
               <Checkbox
                 id="honor_statement"
@@ -212,11 +178,8 @@ export function IdentityVerificationForm() {
                 I certify that all the information provided above is true and I pledge not to misuse research funding.
               </Label>
             </div>
-            {errors.honor_statement && (
-              <p className="text-red-500 text-sm mt-1">{errors.honor_statement}</p>
-            )}
+            {errors.honor_statement && <p className="text-red-500 text-sm mt-1">{errors.honor_statement}</p>}
 
-            {/* 送信ボタン */}
             <Button
               type="submit"
               className="w-full bg-blue-600 text-white font-semibold hover:bg-blue-700"
@@ -230,4 +193,5 @@ export function IdentityVerificationForm() {
     </AppLayout>
   );
 }
+
 

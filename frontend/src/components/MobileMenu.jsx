@@ -3,6 +3,12 @@ import { axiosInstance } from "../api/axiosInstance";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { AdminLink } from "./AdminLink";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 export default function MobileMenu() {
   const [user, setUser] = useState(null);
@@ -30,6 +36,13 @@ export default function MobileMenu() {
     isPostDisabled = false;
   }
 
+  const preventIfDisabled = (e) => {
+    if (isPostDisabled) {
+      e.preventDefault();
+      if (postTooltip) alert(postTooltip);
+    }
+  };
+
   return (
     <>
       {/* 1段目: ロゴとロール */}
@@ -47,9 +60,9 @@ export default function MobileMenu() {
         )}
       </div>
 
-      {/* 2段目: メニュー（AppLayoutと同期） */}
+      {/* 2段目: メニュー */}
       <nav className="bg-slate-800 text-white flex flex-wrap justify-around items-center py-2 border-b shadow-sm">
-        <Button asChild variant="ghost" className="text-sm px-2 py-1 text-white">
+        <Button asChild variant="ghost" className="text-xl px-2 py-1 text-white">
           <Link to="/">Home</Link>
         </Button>
 
@@ -63,63 +76,82 @@ export default function MobileMenu() {
               }, 100);
             }}
             variant="ghost"
-            className="text-sm px-2 py-1 text-white"
+            className="text-xl px-2 py-1 text-white"
           >
             Explore Projects
           </Button>
         )}
 
+        {/* ▼ Projects ドロップダウン（研究者のみ表示） */}
         {isLoggedIn && !isSupporter && (
-          <>
-            <Button
-              asChild
-              variant="ghost"
-              className={`text-sm px-2 py-1 ${
-                isPostDisabled ? "text-gray-400" : "text-white"
-              }`}
-              title={postTooltip}
-              disabled={isPostDisabled}
-            >
-              <Link to={isPostDisabled ? "#" : "/post"}>New Project</Link>
-            </Button>
-
-            <Button
-              asChild
-              variant="ghost"
-              className={`text-sm px-2 py-1 ${
-                isPostDisabled ? "text-gray-400" : "text-white"
-              }`}
-              title={postTooltip}
-              disabled={isPostDisabled}
-            >
-              <Link to={isPostDisabled ? "#" : "/myprojects"}>My Projects</Link>
-            </Button>
-          </>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className={`text-xl px-2 py-1 ${
+                  isPostDisabled ? "text-gray-400" : "text-white"
+                }`}
+                title={isPostDisabled ? postTooltip : ""}
+              >
+                Projects
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-blue-100 text-blue-900 border border-blue-200 shadow-lg rounded-md overflow-hidden min-w-[12rem]">
+              <DropdownMenuItem asChild>
+                <Link
+                  to={isPostDisabled ? "#" : "/post"}
+                  onClick={preventIfDisabled}
+                  className={`block w-full px-4 py-2 text-base ${
+                    isPostDisabled
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "hover:bg-blue-200 hover:text-blue-900"
+                  }`}
+                  title={isPostDisabled ? postTooltip : ""}
+                >
+                  New Project
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  to={isPostDisabled ? "#" : "/myprojects"}
+                  onClick={preventIfDisabled}
+                  className={`block w-full px-4 py-2 text-base ${
+                    isPostDisabled
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "hover:bg-blue-200 hover:text-blue-900"
+                  }`}
+                  title={isPostDisabled ? postTooltip : ""}
+                >
+                  My Projects
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
 
         <AdminLink />
 
         {isLoggedIn && !isVerified && !isSupporter && (
-          <Button asChild variant="ghost" className="text-sm px-2 py-1 text-red-400">
+          <Button asChild variant="ghost" className="text-xl px-2 py-1 text-red-400">
             <Link to="/verify">Verify Your Account</Link>
           </Button>
         )}
 
         {isLoggedIn ? (
           <>
-            <Button asChild variant="ghost" className="text-sm px-2 py-1 text-white">
+            <Button asChild variant="ghost" className="text-xl px-2 py-1 text-white">
               <Link to="/edit">Edit profile</Link>
             </Button>
-            <Button asChild variant="ghost" className="text-sm px-2 py-1 text-white">
+            <Button asChild variant="ghost" className="text-xl px-2 py-1 text-white">
               <Link to="/logout">Log out</Link>
             </Button>
           </>
         ) : (
           <>
-            <Button asChild variant="ghost" className="text-sm px-2 py-1 text-white">
+            <Button asChild variant="ghost" className="text-xl px-2 py-1 text-white">
               <Link to="/register">Sign up</Link>
             </Button>
-            <Button asChild variant="ghost" className="text-sm px-2 py-1 text-white">
+            <Button asChild variant="ghost" className="text-xl px-2 py-1 text-white">
               <Link to="/login">Log in</Link>
             </Button>
           </>
@@ -128,4 +160,5 @@ export default function MobileMenu() {
     </>
   );
 }
+
 

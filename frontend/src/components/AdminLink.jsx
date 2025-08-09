@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { axiosInstance } from '../api/axiosInstance';
+import { Button } from "./ui/button";
 
 export function AdminLink() {
   const [user, setUser] = useState(null);
@@ -26,10 +27,13 @@ export function AdminLink() {
 
   return (
     <div>
-    <Link to="/admin/dashboard" className="text-red-500">
-      Admin
-    </Link>
-
+  <Button
+                asChild
+                variant="ghost"
+                className="text-xl text-red-500 font-medium hover:text-red-500 hover:underline"
+              >
+                <Link to="/admin/dashboard">Admin</Link>
+              </Button>
     </div>
   );
 }

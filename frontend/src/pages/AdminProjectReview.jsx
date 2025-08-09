@@ -1,3 +1,4 @@
+// src/pages/AdminProjectReview.jsx
 import { useEffect, useState } from "react";
 import { axiosInstance } from "../api/axiosInstance";
 import { Card, CardContent } from "@/components/ui/card";
@@ -48,17 +49,32 @@ export function AdminProjectReview() {
     setRejectReasons((prev) => ({ ...prev, [id]: value }));
   };
 
+  // 期限の表示を整える
+  const fmtDate = (iso) => {
+    if (!iso) return "-";
+    const d = new Date(iso);
+    if (isNaN(d)) return iso; // 変換できなければ原文
+    return d.toLocaleDateString("ja-JP", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  };
+
   return (
     <AppLayout>
       <div className="max-w-5xl mx-auto mt-20 space-y-6">
-        <h1 className="text-3xl font-bold">Submitted Projects</h1>
-        <div className="grid grid-cols-2 gap-4">
+        {/* 見出しを中央寄せ */}
+        <h1 className="text-4xl font-extrabold text-blue-900 text-center">Submitted Projects</h1>
+
+        {/* 1段 = 1カード */}
+        <div className="grid grid-cols-1 gap-4">
           {projects.length === 0 ? (
-            <p>No projects are currently pending review.</p>
+            <p className="text-center text-gray-500">No projects are currently pending review.</p>
           ) : (
             projects.map((project) => (
               <Card key={project.id}>
-                <CardContent className="p-6 space-y-2">
+                <CardContent className="p-6 space-y-3">
                   <p className="w-full break-words">
                     <strong>Title:</strong> {project.title}
                   </p>
@@ -66,21 +82,23 @@ export function AdminProjectReview() {
                     <strong>Description:</strong> {project.description}
                   </p>
                   <p>
-                    <strong>Target Amount:</strong> ¥{project.goal_amount.toLocaleString()}
+                    <strong>Target Amount:</strong> ${Number(project.goal_amount ?? 0).toLocaleString()}
                   </p>
                   <p>
-                    <strong>Deadline:</strong> {project.deadline}
+                    <strong>Deadline:</strong> {fmtDate(project.deadline)}
                   </p>
 
-                  <div className="flex items-center space-x-2 mt-4">
-                    <Button variant="success" onClick={() => handleApprove(project.id)}>Approve</Button>
+                  <div className="flex flex-wrap items-center gap-2 mt-4">
+                    <Button onClick={() => handleApprove(project.id)}>Approve</Button>
                     <Input
                       placeholder="Rejection reason (optional)"
                       value={rejectReasons[project.id] || ""}
                       onChange={(e) => handleReasonChange(project.id, e.target.value)}
                       className="w-64"
                     />
-                    <Button variant="destructive" onClick={() => handleReject(project.id)}>Reject</Button>
+                    <Button variant="destructive" onClick={() => handleReject(project.id)}>
+                      Reject
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

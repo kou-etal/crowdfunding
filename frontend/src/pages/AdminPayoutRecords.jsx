@@ -32,8 +32,8 @@ export function AdminPayoutRecords() {
 
   return (
     <AppLayout>
-      <div className="max-w-5xl mx-auto mt-20 space-y-6">
-        <h1 className="text-3xl font-bold">Payout Records</h1>
+      <div className="max-w-5xl mx-auto items-center mt-20 space-y-6">
+        <h1 className="text-3xl font-extrabold text-blue-900 text-center">Payout Records</h1>
         {records.length === 0 ? (
           <p>No payout records available.</p>
         ) : (

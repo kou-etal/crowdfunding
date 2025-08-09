@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use App\Models\CrowdfundingProject;
+use App\Models\CrowdfundingSupport;
 
 class CrowdfundingSupportApiController extends Controller
 {
@@ -18,11 +20,35 @@ class CrowdfundingSupportApiController extends Controller
     {
         $request->validate([
             'project_id' => 'required|exists:crowdfunding_projects,id',
-            'amount'     => 'required|integer|min:100',
+            'amount'     => 'required|integer|min:1',
         ]);
 
         $user    = $request->user();
         $project = CrowdfundingProject::findOrFail($request->project_id);
+
+        // --- 追加: 残り到達可能額をサーバ側で厳密チェック ---
+        $raised     = (int) CrowdfundingSupport::where('project_id', $project->id)->sum('amount');
+        $goal       = (int) $project->goal_amount;
+        $remaining  = max(0, $goal - $raised);
+        $reqAmount  = (int) $request->amount;
+
+        // すでに達成済み
+        if ($remaining <= 0) {
+            throw new HttpResponseException(
+                response()->json(['message' => 'This project already reached its goal.'], 409)
+            );
+        }
+
+        // 超過分の指定
+        if ($reqAmount > $remaining) {
+            throw new HttpResponseException(
+                response()->json([
+                    'message'   => 'Amount exceeds remaining goal.',
+                    'remaining' => $remaining,
+                ], 422)
+            );
+        }
+        // --- ここまで ---
 
         $clientId = config('services.paypal.client_id');
         $secret   = config('services.paypal.secret');
@@ -35,7 +61,7 @@ class CrowdfundingSupportApiController extends Controller
         $accessToken = $this->getPaypalAccessToken($clientId, $secret);
 
         $order = $this->createPaypalOrder($accessToken, [
-            'amount'     => (int) $request->amount,   // JPYは整数
+            'amount'     => $reqAmount,   // JPYは整数
             'user_id'    => (int) $user->id,
             'project_id' => (int) $project->id,
             'title'      => $project->title,
@@ -86,7 +112,7 @@ class CrowdfundingSupportApiController extends Controller
             'intent' => 'CAPTURE',
             'purchase_units' => [[
                 'amount' => [
-                    'currency_code' => 'JPY',
+                    'currency_code' => 'USD',
                     'value' => $amountValue,
                 ],
                 // 後でwebhookで誰の/どのプロジェクトか判別

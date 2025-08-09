@@ -1,54 +1,89 @@
-import React from 'react';
-import { Progress } from './ui/progress';
+import { Link } from "react-router-dom";
+import { Progress } from "./ui/progress";
+
+const toInt = (v, d = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : d;
+};
+const parsePercent = (v) => {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    const m = v.match(/[\d.]+/);
+    return m ? Number(m[0]) : null;
+  }
+  return null;
+};
+const isPastDay = (iso) => {
+  if (!iso) return false;
+  const d = new Date(iso);
+  const today = new Date();
+  const day = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  return day(d) < day(today);
+};
 
 const ProjectCard = ({ project }) => {
-  // 残り日数計算
+  // —— 基本値
+  const goal = toInt(project.goal_amount, 0);
+
+  // 合計（APIのキー差を吸収）
+  const totalRaw = toInt(
+    project.current_amount ??
+    project.currentAmount ??
+    project.total_amount ??
+    project.supports_sum_amount ??
+    0,
+    0
+  );
+
+  // 進捗%
+  const percent = (() => {
+    const p = parsePercent(project.progress_percent);
+    if (p !== null) return Math.min(Math.round(p), 100);
+    // %が無い場合は合計から算出
+    return goal > 0 ? Math.min(Math.round((totalRaw / goal) * 100), 100) : 0;
+  })();
+
+  // 表示用合計（APIが金額を返さない環境でも見栄え維持）
+  const totalForDisplay =
+    totalRaw > 0
+      ? totalRaw
+      : goal > 0 && percent > 0
+      ? Math.round((percent / 100) * goal)
+      : 0;
+
+  // 非表示条件（期限切れ または 達成）
+  const deadlineOk = !project.deadline || !isPastDay(project.deadline);
+  const reached = Boolean(project.is_goal_reached) || percent >= 100 || (goal > 0 && totalRaw >= goal);
+  if (!deadlineOk || reached) return null;
+
+  // 残り日数
   const daysRemaining = (() => {
     if (!project.deadline) return null;
     const deadlineDate = new Date(project.deadline);
     const today = new Date();
     const diff = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
-    return diff < 0 ? 'Ended' : `${diff} days`;
+    return diff < 0 ? "Ended" : `${diff} days`;
   })();
-
-  // 達成率計算
-  const calculatedProgress = project.progress_percent
-    ? Math.min(Math.round(project.progress_percent), 100)
-    : (() => {
-        const total = Number(project.total_amount ?? project.supports_sum_amount ?? project.current_amount ?? 0);
-        const goal = Number(project.goal_amount ?? Infinity);
-        return goal > 0 ? Math.min(Math.round((total / goal) * 100), 100) : 0;
-      })();
-
-  // 表示可否（期限切れや達成済みを除外）
-  const now = new Date();
-  const deadlineOk = !project.deadline || new Date(project.deadline) >= now;
-  const total = Number(project.total_amount ?? project.supports_sum_amount ?? project.current_amount ?? 0);
-  const goal = Number(project.goal_amount ?? Infinity);
-  const reached = total >= goal;
-  if (!deadlineOk || reached) {
-    return null; // 表示しない
-  }
 
   return (
     <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden relative group">
-      {/* Project image */}
-      <div className="relative w-full h-48 overflow-hidden bg-gray-200">
+      {/* 画像もSPAリンクに */}
+      <Link
+        to={`/crowdfunding/${project.id}`}
+        className="relative w-full h-48 overflow-hidden bg-gray-200 block"
+      >
         <img
           src={project.imageUrl}
           alt={project.title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
         {daysRemaining && (
-          <div
-            className={`absolute top-2 right-2 text-white text-sm px-3 py-1 rounded-full font-bold ${
-              daysRemaining === 'Ended' ? 'bg-gray-600' : 'bg-blue-900'
-            }`}
-          >
+          <div className={`absolute top-2 right-2 text-white text-sm px-3 py-1 rounded-full font-bold ${daysRemaining === "Ended" ? "bg-gray-600" : "bg-blue-900"}`}>
             <span>{daysRemaining} left</span>
           </div>
         )}
-      </div>
+      </Link>
 
       <div className="p-5">
         {/* Avatar and Owner name */}
@@ -58,7 +93,7 @@ const ProjectCard = ({ project }) => {
             alt={project.ownerName}
             className="w-16 h-16 rounded-full border-2 border-white shadow-md bg-gray-300 object-cover"
           />
-          <p className="text-lg font-bold text-blue-800">{project.ownerName || 'Project Owner'}</p>
+          <p className="text-lg font-bold text-blue-800">{project.ownerName || "Project Owner"}</p>
         </div>
 
         {/* Title and description */}
@@ -73,31 +108,27 @@ const ProjectCard = ({ project }) => {
         <div className="mb-4">
           <div className="flex justify-between items-baseline mb-1 text-sm font-medium">
             <span className="text-blue-700 font-bold">
-              Goal: {project.goal_amount ? `$${project.goal_amount.toLocaleString()}` : 'N/A'}
+              Goal: {goal ? `$${goal.toLocaleString()}` : "N/A"}
             </span>
             <span className="text-blue-900 text-xl font-bold">
-              {total ? `$${total.toLocaleString()}` : '$0'}
+              {`$${totalForDisplay.toLocaleString()}`}
             </span>
           </div>
-          <Progress
-            value={calculatedProgress}
-            className="w-full h-2 bg-blue-200 [&>*]:bg-blue-600"
-          />
-          <p className="text-right text-xs text-gray-500 mt-1">
-            Progress: {calculatedProgress}%
-          </p>
+          <Progress value={percent} className="w-full h-2 bg-blue-200 [&>*]:bg-blue-600" />
+          <p className="text-right text-xs text-gray-500 mt-1">Progress: {percent}%</p>
         </div>
 
         {/* View Details */}
-        <a
-          href={`/crowdfunding/${project.id}`}
+        <Link
+          to={`/crowdfunding/${project.id}`}
           className="block w-full text-center bg-blue-600 text-white text-lg font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300"
         >
           View Project
-        </a>
+        </Link>
       </div>
     </div>
   );
 };
 
 export default ProjectCard;
+
