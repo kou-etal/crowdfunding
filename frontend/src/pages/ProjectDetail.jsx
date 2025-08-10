@@ -1,4 +1,4 @@
-// src/pages/ProjectDetail.jsx
+
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { axiosInstance } from "../api/axiosInstance";
@@ -11,11 +11,11 @@ import { Input } from "@/components/ui/input";
 export function ProjectDetail() {
   const { id } = useParams();
   const [project, setProject] = useState(null);
-  const [amount, setAmount] = useState("");
+  const [amountStr, setAmountStr] = useState(""); // ← テキストで管理（整数のみ許可）
+  const [amountError, setAmountError] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
-  // 合計金額の取得（API のキー差を吸収）
   const getTotal = (p) =>
     Number(
       p?.current_amount ??
@@ -25,7 +25,6 @@ export function ProjectDetail() {
         0
     );
 
-  // 初回取得
   useEffect(() => {
     sessionStorage.setItem("lastViewedProjectId", id);
     const fetchProject = async () => {
@@ -42,16 +41,8 @@ export function ProjectDetail() {
     fetchProject();
   }, [id]);
 
-  // 表示用の派生値
   const derived = useMemo(() => {
-    if (!project) {
-      return {
-        goal: 0,
-        raised: 0,
-        remaining: 0,
-        progress: 0,
-      };
-    }
+    if (!project) return { goal: 0, raised: 0, remaining: 0, progress: 0 };
     const goal = Number(project.goal_amount ?? 0);
     const raised = getTotal(project);
     const remaining = Math.max(0, goal - raised);
@@ -59,15 +50,54 @@ export function ProjectDetail() {
     return { goal, raised, remaining, progress };
   }, [project]);
 
-  const handleSupport = async () => {
-    const numericAmount = parseInt(amount, 10);
+  // 入力ハンドラ（整数のみ / 小数は即エラー）
+  const onChangeAmount = (e) => {
+    const raw = e.target.value;
 
-    if (!numericAmount || isNaN(numericAmount) || numericAmount <= 0) {
-      alert("Please enter a valid support amount.");
+    // 小数を含んだらエラー（'.'や','）
+    if (raw.includes(".") || raw.includes(",")) {
+      setAmountStr(raw);
+      setAmountError("USD is whole dollars only. Please enter an integer.");
       return;
     }
 
-    // クライアント側の即時ガード（サーバ側でも検証される）
+    // 数字以外は除去（先頭ゼロは許容）
+    if (!/^\d*$/.test(raw)) {
+      // 直近の数字だけ抽出して反映
+      const digits = raw.replace(/\D+/g, "");
+      setAmountStr(digits);
+      setAmountError(digits ? "" : "");
+      return;
+    }
+
+    setAmountStr(raw);
+
+    // ルール: 1 以上 & 残額以内
+    if (raw === "") {
+      setAmountError("");
+      return;
+    }
+
+    const val = parseInt(raw, 10);
+    if (Number.isNaN(val) || val < 1) {
+      setAmountError("Please enter at least $1.");
+    } else if (derived.remaining > 0 && val > derived.remaining) {
+      setAmountError(
+        `Amount exceeds remaining goal. Only $${derived.remaining.toLocaleString()} is needed.`
+      );
+    } else {
+      setAmountError("");
+    }
+  };
+
+  const handleSupport = async () => {
+    const numericAmount = parseInt(amountStr || "0", 10);
+
+    // 最終ガード
+    if (!numericAmount || numericAmount < 1 || amountError) {
+      alert(amountError || "Please enter a valid support amount.");
+      return;
+    }
     if (numericAmount > derived.remaining) {
       alert(
         derived.remaining > 0
@@ -81,17 +111,15 @@ export function ProjectDetail() {
       setLoading(true);
       const res = await axiosInstance.post("/api/crowdfunding-supports/session", {
         project_id: project.id,
-        amount: numericAmount,
+        amount: numericAmount, // サーバへは整数ドル
       });
-      // PayPal承認へ
-      window.location.href = res.data.url;
+      window.location.href = res.data.url; // PayPal 承認へ
     } catch (err) {
       console.error("Support session creation failed", err);
       const status = err?.response?.status;
       const msg = err?.response?.data?.message;
 
       if (status === 409) {
-        // サーバ側：達成済み
         alert("This project already reached its goal.");
       } else if (status === 422 && msg?.includes("exceeds")) {
         const srvRemaining = err?.response?.data?.remaining;
@@ -129,7 +157,6 @@ export function ProjectDetail() {
                 {project.title}
               </h1>
 
-              {/* メイン画像（あれば） */}
               {project.image_path && (
                 <img
                   src={project.image_path}
@@ -158,18 +185,24 @@ export function ProjectDetail() {
 
               <div className="pt-6 space-y-3">
                 <Input
-                  type="number"
-                  placeholder="Enter support amount ($)"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  min={1}
-                  max={derived.remaining > 0 ? derived.remaining : undefined}
+                  // 数字キーボードを出しつつ自由度を保つ
+                  type="text"
+                  inputMode="numeric"
+                  pattern="\d*"
+                  placeholder="Enter support amount ($, whole dollars only)"
+                  value={amountStr}
+                  onChange={onChangeAmount}
+                  minLength={1}
                   disabled={derived.remaining <= 0}
                 />
+                {amountError && (
+                  <p className="text-red-600 text-sm">{amountError}</p>
+                )}
+
                 <Button
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={handleSupport}
-                  disabled={loading || derived.remaining <= 0}
+                  disabled={loading || derived.remaining <= 0 || !!amountError || amountStr === ""}
                 >
                   {derived.remaining <= 0
                     ? "Goal Reached"
@@ -178,7 +211,7 @@ export function ProjectDetail() {
                     : "Support this project"}
                 </Button>
                 <p className="text-xs text-gray-500 text-center">
-                  Payment may take a short time to reflect on the total. Thanks for your patience!
+                  Payments may take a short time to reflect on the total. Thanks for your patience!
                 </p>
               </div>
             </CardContent>
@@ -256,3 +289,4 @@ export function ProjectDetail() {
     </AppLayout>
   );
 }
+

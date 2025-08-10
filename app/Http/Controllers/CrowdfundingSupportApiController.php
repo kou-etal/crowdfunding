@@ -105,7 +105,7 @@ class CrowdfundingSupportApiController extends Controller
     {
         $base = $this->paypalBase();
 
-        // JPYは小数不可。値は文字列で送るのが安全
+        // 小数不可。値は文字列で送るのが安全
         $amountValue = (string) $data['amount'];
 
         $payload = [

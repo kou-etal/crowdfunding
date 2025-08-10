@@ -1,3 +1,4 @@
+// src/components/MobileMenu.jsx
 import { useEffect, useState } from "react";
 import { axiosInstance } from "../api/axiosInstance";
 import { Link } from "react-router-dom";
@@ -43,6 +44,161 @@ export default function MobileMenu() {
     }
   };
 
+  // 1) 各メニュー要素を配列に集約
+  const items = [];
+
+  items.push({
+    key: "home",
+    node: (
+      <Button asChild variant="ghost" className="text-base px-3 py-1 text-white">
+        <Link to="/">Home</Link>
+      </Button>
+    ),
+  });
+
+  if (!isLoggedIn || isSupporter) {
+    items.push({
+      key: "explore",
+      node: (
+        <Button
+          onClick={() => {
+            window.history.pushState({}, "", "/#explore");
+            setTimeout(() => {
+              const el = document.getElementById("explore");
+              if (el) el.scrollIntoView({ behavior: "smooth" });
+            }, 100);
+          }}
+          variant="ghost"
+          className="text-base px-3 py-1 text-white"
+        >
+          Explore Projects
+        </Button>
+      ),
+    });
+  }
+
+  if (isLoggedIn && !isSupporter) {
+    items.push({
+      key: "projects",
+      node: (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className={`text-base px-3 py-1 ${
+                isPostDisabled ? "text-gray-400" : "text-white"
+              }`}
+              title={isPostDisabled ? postTooltip : ""}
+            >
+              Projects
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-blue-100 text-blue-900 border border-blue-200 shadow-lg rounded-md overflow-hidden min-w-[12rem]">
+            <DropdownMenuItem asChild>
+              <Link
+                to={isPostDisabled ? "#" : "/post"}
+                onClick={preventIfDisabled}
+                className={`block w-full px-4 py-2 text-base ${
+                  isPostDisabled
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "hover:bg-blue-200 hover:text-blue-900"
+                }`}
+                title={isPostDisabled ? postTooltip : ""}
+              >
+                New Project
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link
+                to={isPostDisabled ? "#" : "/myprojects"}
+                onClick={preventIfDisabled}
+                className={`block w-full px-4 py-2 text-base ${
+                  isPostDisabled
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "hover:bg-blue-200 hover:text-blue-900"
+                }`}
+                title={isPostDisabled ? postTooltip : ""}
+              >
+                My Projects
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    });
+  }
+
+  // Admin
+  items.push({
+    key: "admin",
+    node: (
+      <div className="text-white">
+        <AdminLink />
+      </div>
+    ),
+  });
+
+  if (isLoggedIn && !isVerified && !isSupporter) {
+    items.push({
+      key: "verify",
+      node: (
+        <Button asChild variant="ghost" className="text-base px-3 py-1 text-red-400">
+          <Link to="/verify">Verify Your Account</Link>
+        </Button>
+      ),
+    });
+  }
+
+  if (isLoggedIn) {
+    items.push({
+      key: "edit",
+      node: (
+        <Button asChild variant="ghost" className="text-base px-3 py-1 text-white">
+          <Link to="/edit">Edit profile</Link>
+        </Button>
+      ),
+    });
+    items.push({
+      key: "logout",
+      node: (
+        <Button asChild variant="ghost" className="text-base px-3 py-1 text-white">
+          <Link to="/logout">Log out</Link>
+        </Button>
+      ),
+    });
+  } else {
+    items.push({
+      key: "signup",
+      node: (
+        <Button asChild variant="ghost" className="text-base px-3 py-1 text-white">
+          <Link to="/register">Sign up</Link>
+        </Button>
+      ),
+    });
+    items.push({
+      key: "login",
+      node: (
+        <Button asChild variant="ghost" className="text-base px-3 py-1 text-white">
+          <Link to="/login">Log in</Link>
+        </Button>
+      ),
+    });
+  }
+
+  // 2) 配列を段に分割（4=1段, 5=3+2, 6=3+3, それ以外は3列ずつ）
+  const makeRows = (arr) => {
+    const n = arr.length;
+    if (n <= 4) return [arr];               // 1段
+    if (n === 5) return [arr.slice(0, 3), arr.slice(3)]; // 3+2
+    if (n === 6) return [arr.slice(0, 3), arr.slice(3)]; // 3+3
+    // 7以上は3列ずつ
+    const rows = [];
+    for (let i = 0; i < n; i += 3) rows.push(arr.slice(i, i + 3));
+    return rows;
+  };
+
+  const rows = makeRows(items);
+
   return (
     <>
       {/* 1段目: ロゴとロール */}
@@ -60,105 +216,23 @@ export default function MobileMenu() {
         )}
       </div>
 
-      {/* 2段目: メニュー */}
-      <nav className="bg-slate-800 text-white flex flex-wrap justify-around items-center py-2 border-b shadow-sm">
-        <Button asChild variant="ghost" className="text-xl px-2 py-1 text-white">
-          <Link to="/">Home</Link>
-        </Button>
-
-        {(!isLoggedIn || isSupporter) && (
-          <Button
-            onClick={() => {
-              window.history.pushState({}, "", "/#explore");
-              setTimeout(() => {
-                const el = document.getElementById("explore");
-                if (el) el.scrollIntoView({ behavior: "smooth" });
-              }, 100);
-            }}
-            variant="ghost"
-            className="text-xl px-2 py-1 text-white"
-          >
-            Explore Projects
-          </Button>
-        )}
-
-        {/* ▼ Projects ドロップダウン（研究者のみ表示） */}
-        {isLoggedIn && !isSupporter && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className={`text-xl px-2 py-1 ${
-                  isPostDisabled ? "text-gray-400" : "text-white"
-                }`}
-                title={isPostDisabled ? postTooltip : ""}
-              >
-                Projects
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-blue-100 text-blue-900 border border-blue-200 shadow-lg rounded-md overflow-hidden min-w-[12rem]">
-              <DropdownMenuItem asChild>
-                <Link
-                  to={isPostDisabled ? "#" : "/post"}
-                  onClick={preventIfDisabled}
-                  className={`block w-full px-4 py-2 text-base ${
-                    isPostDisabled
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "hover:bg-blue-200 hover:text-blue-900"
-                  }`}
-                  title={isPostDisabled ? postTooltip : ""}
-                >
-                  New Project
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link
-                  to={isPostDisabled ? "#" : "/myprojects"}
-                  onClick={preventIfDisabled}
-                  className={`block w-full px-4 py-2 text-base ${
-                    isPostDisabled
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "hover:bg-blue-200 hover:text-blue-900"
-                  }`}
-                  title={isPostDisabled ? postTooltip : ""}
-                >
-                  My Projects
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-
-        <AdminLink />
-
-        {isLoggedIn && !isVerified && !isSupporter && (
-          <Button asChild variant="ghost" className="text-xl px-2 py-1 text-red-400">
-            <Link to="/verify">Verify Your Account</Link>
-          </Button>
-        )}
-
-        {isLoggedIn ? (
-          <>
-            <Button asChild variant="ghost" className="text-xl px-2 py-1 text-white">
-              <Link to="/edit">Edit profile</Link>
-            </Button>
-            <Button asChild variant="ghost" className="text-xl px-2 py-1 text-white">
-              <Link to="/logout">Log out</Link>
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button asChild variant="ghost" className="text-xl px-2 py-1 text-white">
-              <Link to="/register">Sign up</Link>
-            </Button>
-            <Button asChild variant="ghost" className="text-xl px-2 py-1 text-white">
-              <Link to="/login">Log in</Link>
-            </Button>
-          </>
-        )}
+      {/* 2段目: 段組みメニュー（スクロール無し） */}
+      <nav className="bg-slate-800 text-white border-b shadow-sm">
+        {rows.map((row, idx) => {
+          const cols =
+            row.length === 2 ? "grid-cols-2" :
+            row.length === 4 ? "grid-cols-4" :
+            "grid-cols-3"; // 3列がデフォ
+          return (
+            <div key={idx} className={`grid ${cols} gap-1 px-2 py-2`}>
+              {row.map((it) => (
+                <div key={it.key} className="flex justify-center">{it.node}</div>
+              ))}
+            </div>
+          );
+        })}
       </nav>
     </>
   );
 }
-
 

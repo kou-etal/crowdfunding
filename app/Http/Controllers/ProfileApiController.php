@@ -121,20 +121,24 @@ public function updateIntroduction(Request $request)
 
 
 
-    public function uploadImage(Request $request)
+    // app/Http/Controllers/ProfileApiController.php
+
+public function uploadImage(Request $request)
 {
-    $request->validate([
-        'image' => 'required|image|max:5000',
+    $validated = $request->validate([
+        // 画像ファイル限定＋拡張子制限＋最大 5MB
+        'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
     ]);
 
     $path = $request->file('image')->store('profile_images', 'public');
 
     $user = $request->user();
-    $user->profile_image = config('app.url') . '/storage/' . $path; //絶対URL
+    $user->profile_image = config('app.url') . '/storage/' . $path; // 絶対URLで保存
     $user->save();
 
     return response()->json(['profile_image' => $user->profile_image], 200);
 }
+
 
 /*public function uploadImage(Request $request)
 {

@@ -1,4 +1,4 @@
-// ProfileEdit.jsx
+// src/pages/ProfileEdit.jsx
 import { useEffect, useState } from 'react';
 import { axiosInstance } from '../api/axiosInstance';
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,8 +23,9 @@ export function ProfileEdit() {
     institute: ''
   });
   const [imageFile, setImageFile] = useState(null);
+  const [imageError, setImageError] = useState('');
   const [loading, setLoading] = useState(false);
-   const navigate = useNavigate();
+  const navigate = useNavigate();
 
   useEffect(() => {
     axiosInstance.get('/api/profile')
@@ -58,11 +59,35 @@ export function ProfileEdit() {
   };
 
   const handleImageChange = e => {
-    setImageFile(e.target.files[0]);
+    const file = e.target.files?.[0] || null;
+    setImageError('');
+    setImageFile(null);
+
+    if (!file) return;
+
+    // フロント側バリデーション：画像のみ / 5MBまで
+    const isImage = file.type.startsWith('image/');
+    const maxBytes = 5 * 1024 * 1024; // 5MB
+
+    if (!isImage) {
+      setImageError('Please select an image file (jpg, png, webp, etc.). PDFs are not allowed.');
+      return;
+    }
+    if (file.size > maxBytes) {
+      setImageError('Image is too large. Max size is 5MB.');
+      return;
+    }
+
+    setImageFile(file);
   };
 
   const handleImageUpload = async () => {
-    if (!imageFile) return;
+    if (!imageFile) {
+      setImageError('Please select an image first.');
+      return;
+    }
+    if (imageError) return; // エラーがある場合は送らない
+
     const formData = new FormData();
     formData.append('image', imageFile);
 
@@ -73,8 +98,12 @@ export function ProfileEdit() {
       });
       const res = await axiosInstance.get('/api/profile');
       setProfile(res.data);
+      setImageFile(null);
+      setImageError('');
+      alert('Profile image updated.');
     } catch (err) {
-      alert('Failed to upload image');
+      const msg = err?.response?.data?.message || 'Failed to upload image';
+      alert(msg);
     } finally {
       setLoading(false);
     }
@@ -113,15 +142,19 @@ export function ProfileEdit() {
               <Input
                 id="profile_image"
                 type="file"
+                accept="image/*"             // ← 画像以外の選択をUIで抑止
                 onChange={handleImageChange}
                 aria-label="Select profile image"
               />
-              <p className="text-sm text-gray-500">Upload a clear face photo.</p>
+              {imageError && (
+                <p className="text-sm text-red-600">{imageError}</p>
+              )}
+              <p className="text-sm text-gray-500">Upload a clear face photo. (Max 5MB)</p>
               <Button
                 type="button"
                 onClick={handleImageUpload}
                 className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
-                disabled={loading}
+                disabled={loading || !imageFile || !!imageError}
               >
                 {loading ? "Uploading..." : "Upload"}
               </Button>
@@ -139,7 +172,6 @@ export function ProfileEdit() {
                 required
                 placeholder="e.g. john"
               />
-              
             </div>
 
             <div>
@@ -184,7 +216,8 @@ export function ProfileEdit() {
                   <SelectItem value="researcher">Researcher</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-sm text-gray-500">Choose "Researcher" if you plan to post campaigns.
+              <p className="text-sm text-gray-500">
+                Choose "Researcher" if you plan to post campaigns.
                 Researchers are required to complete identity verification, which includes providing your supervisor's full name, affiliation, and email address.*
               </p>
             </div>
@@ -262,3 +295,4 @@ export function ProfileEdit() {
     </AppLayout>
   );
 }
+
