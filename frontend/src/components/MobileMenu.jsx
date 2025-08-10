@@ -48,14 +48,18 @@ export default function MobileMenu() {
     }
   };
 
+  // ボタン共通（省略なし＝フル表示、中央寄せ）
+  const btnBase  = "w-full min-h-11 py-2 text-white text-sm";
+  const linkBase = "block w-full text-center whitespace-normal leading-snug"; // ← 省略しない
+
   // メニュー配列
   const items = [];
 
   items.push({
     key: "home",
     node: (
-      <Button asChild variant="ghost" className="w-full text-base py-2 text-white">
-        <Link className="block w-full text-center" to="/">Home</Link>
+      <Button asChild variant="ghost" className={btnBase}>
+        <Link className={linkBase} to="/">Home</Link>
       </Button>
     ),
   });
@@ -66,7 +70,7 @@ export default function MobileMenu() {
       node: (
         <Button
           variant="ghost"
-          className="w-full text-base py-2 text-white"
+          className={btnBase}
           onClick={() => {
             window.history.pushState({}, "", "/#explore");
             setTimeout(() => {
@@ -74,7 +78,7 @@ export default function MobileMenu() {
             }, 80);
           }}
         >
-          <span className="block w-full text-center">Explore Projects</span>
+          <span className={linkBase}>Explore Projects</span>
         </Button>
       ),
     });
@@ -88,10 +92,10 @@ export default function MobileMenu() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className={`w-full text-base py-2 ${isPostDisabled ? "text-gray-400" : "text-white"}`}
+              className={`${btnBase} ${isPostDisabled ? "text-gray-400" : "text-white"}`}
               title={isPostDisabled ? postTooltip : ""}
             >
-              <span className="block w-full text-center">Projects</span>
+              <span className={linkBase}>Projects</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="min-w-[12rem] bg-blue-100 text-blue-900 border border-blue-200 shadow-lg rounded-md overflow-hidden">
@@ -99,7 +103,7 @@ export default function MobileMenu() {
               <Link
                 to={isPostDisabled ? "#" : "/post"}
                 onClick={preventIfDisabled}
-                className={`block px-4 py-2 text-base ${
+                className={`block px-4 py-2 text-sm ${
                   isPostDisabled ? "text-gray-400 cursor-not-allowed" : "hover:bg-blue-200 hover:text-blue-900"
                 }`}
                 title={isPostDisabled ? postTooltip : ""}
@@ -111,7 +115,7 @@ export default function MobileMenu() {
               <Link
                 to={isPostDisabled ? "#" : "/myprojects"}
                 onClick={preventIfDisabled}
-                className={`block px-4 py-2 text-base ${
+                className={`block px-4 py-2 text-sm ${
                   isPostDisabled ? "text-gray-400 cursor-not-allowed" : "hover:bg-blue-200 hover:text-blue-900"
                 }`}
                 title={isPostDisabled ? postTooltip : ""}
@@ -129,12 +133,8 @@ export default function MobileMenu() {
     items.push({
       key: "admin",
       node: (
-        <div className="w-full">
-          <div className="mx-auto max-w-[12rem]">
-            <div className="w-full">
-              <AdminLink />
-            </div>
-          </div>
+        <div className="w-full min-h-11 flex items-center justify-center">
+          <AdminLink />
         </div>
       ),
     });
@@ -144,8 +144,8 @@ export default function MobileMenu() {
     items.push({
       key: "verify",
       node: (
-        <Button asChild variant="ghost" className="w-full text-base py-2 text-red-400">
-          <Link className="block w-full text-center" to="/verify">Verify Your Account</Link>
+        <Button asChild variant="ghost" className={`${btnBase} text-red-300`}>
+          <Link className={linkBase} to="/verify">Verify Your Account</Link>
         </Button>
       ),
     });
@@ -155,16 +155,16 @@ export default function MobileMenu() {
     items.push({
       key: "edit",
       node: (
-        <Button asChild variant="ghost" className="w-full text-base py-2 text-white">
-          <Link className="block w-full text-center" to="/edit">Edit profile</Link>
+        <Button asChild variant="ghost" className={btnBase}>
+          <Link className={linkBase} to="/edit">Edit profile</Link>
         </Button>
       ),
     });
     items.push({
       key: "logout",
       node: (
-        <Button asChild variant="ghost" className="w-full text-base py-2 text-white">
-          <Link className="block w-full text-center" to="/logout">Log out</Link>
+        <Button asChild variant="ghost" className={btnBase}>
+          <Link className={linkBase} to="/logout">Log out</Link>
         </Button>
       ),
     });
@@ -172,22 +172,22 @@ export default function MobileMenu() {
     items.push({
       key: "signup",
       node: (
-        <Button asChild variant="ghost" className="w-full text-base py-2 text-white">
-          <Link className="block w-full text-center" to="/register">Sign up</Link>
+        <Button asChild variant="ghost" className={btnBase}>
+          <Link className={linkBase} to="/register">Sign up</Link>
         </Button>
       ),
     });
     items.push({
       key: "login",
       node: (
-        <Button asChild variant="ghost" className="w-full text-base py-2 text-white">
-          <Link className="block w-full text-center" to="/login">Log in</Link>
+        <Button asChild variant="ghost" className={btnBase}>
+          <Link className={linkBase} to="/login">Log in</Link>
         </Button>
       ),
     });
   }
 
-  // 段分け（4=1段, 5=3+2, 6=3+3）
+  // 段分け（4=1段, 5=3+2, 6=3+3, それ以上は3列ずつ）
   const makeRows = (arr) => {
     const n = arr.length;
     if (n <= 4) return [arr];
@@ -199,6 +199,9 @@ export default function MobileMenu() {
   };
 
   const rows = makeRows(items);
+
+  // 4個のときだけ、よりタイトに（文字は省略せず見せる）
+  const fourTight = items.length === 4 ? "text-[13.5px] px-1" : "";
 
   return (
     <>
@@ -217,18 +220,22 @@ export default function MobileMenu() {
         )}
       </div>
 
-      {/* 段組みメニュー（各セルとボタンを w-full にして幅を完全均等化） */}
+      {/* 段組みメニュー（4個は1段で均等幅。区切りはdivideで等間隔に見せる） */}
       <nav className="bg-slate-800 text-white border-b shadow-sm">
         {rows.map((row, idx) => {
           const cols =
             row.length === 2 ? "grid-cols-2" :
             row.length === 4 ? "grid-cols-4" :
             "grid-cols-3";
+
           return (
-            <div key={idx} className={`grid ${cols} gap-0 px-0`}>
+            <div
+              key={idx}
+              className={`grid ${cols} divide-x divide-white/10`} // ← 均等な区切り線
+            >
               {row.map((it) => (
-                <div key={it.key} className="border-r border-white/10 last:border-r-0">
-                  <div className="px-2 py-2">
+                <div key={it.key} className="flex items-stretch">
+                  <div className={`w-full px-2 py-1 ${fourTight}`}>
                     {it.node}
                   </div>
                 </div>
