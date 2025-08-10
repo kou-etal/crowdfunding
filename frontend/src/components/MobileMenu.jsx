@@ -15,33 +15,47 @@ export default function MobileMenu() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    axiosInstance.get("/api/profile")
+    axiosInstance
+      .get("/api/profile")
       .then((res) => setUser(res.data))
       .catch(() => setUser(null));
   }, []);
 
- const isLoggedIn  = !!user;
+  const isLoggedIn  = !!user;
   const isSupporter = user?.role === "supporter";
   const isVerified  = user?.is_verified == 1;
+  const isAdmin     = user?.role === "admin" || user?.is_admin === 1;
 
-  const isAdmin = user?.role === "admin" || user?.is_admin === 1;
+  // 投稿可否＆ツールチップ
+  const isPostDisabled =
+    !isLoggedIn ? true :
+    isSupporter ? true :
+    !isVerified;
 
-  // ここを追加
-  const isPostDisabled = !isVerified; 
-  const postTooltip = "Please verify your account before posting.";
+  const postTooltip =
+    !isLoggedIn
+      ? "Please log in"
+      : isSupporter
+      ? "Supporters cannot post"
+      : !isVerified
+      ? "Identity verification is required"
+      : "";
+
   const preventIfDisabled = (e) => {
     if (isPostDisabled) {
       e.preventDefault();
+      if (postTooltip) alert(postTooltip);
     }
   };
 
+  // メニュー配列
   const items = [];
 
   items.push({
     key: "home",
     node: (
-      <Button asChild variant="ghost" className="text-base px-3 py-1 text-white">
-        <Link to="/">Home</Link>
+      <Button asChild variant="ghost" className="w-full text-base py-2 text-white">
+        <Link className="block w-full text-center" to="/">Home</Link>
       </Button>
     ),
   });
@@ -51,16 +65,16 @@ export default function MobileMenu() {
       key: "explore",
       node: (
         <Button
+          variant="ghost"
+          className="w-full text-base py-2 text-white"
           onClick={() => {
             window.history.pushState({}, "", "/#explore");
             setTimeout(() => {
               document.getElementById("explore")?.scrollIntoView({ behavior: "smooth" });
-            }, 100);
+            }, 80);
           }}
-          variant="ghost"
-          className="text-base px-3 py-1 text-white"
         >
-          Explore Projects
+          <span className="block w-full text-center">Explore Projects</span>
         </Button>
       ),
     });
@@ -74,18 +88,20 @@ export default function MobileMenu() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className={`text-base px-3 py-1 ${isPostDisabled ? "text-gray-400" : "text-white"}`}
+              className={`w-full text-base py-2 ${isPostDisabled ? "text-gray-400" : "text-white"}`}
               title={isPostDisabled ? postTooltip : ""}
             >
-              Projects
+              <span className="block w-full text-center">Projects</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-blue-100 text-blue-900 border border-blue-200 shadow-lg rounded-md overflow-hidden min-w-[12rem]">
+          <DropdownMenuContent className="min-w-[12rem] bg-blue-100 text-blue-900 border border-blue-200 shadow-lg rounded-md overflow-hidden">
             <DropdownMenuItem asChild>
               <Link
                 to={isPostDisabled ? "#" : "/post"}
                 onClick={preventIfDisabled}
-                className={`block w-full px-4 py-2 text-base ${isPostDisabled ? "text-gray-400 cursor-not-allowed" : "hover:bg-blue-200 hover:text-blue-900"}`}
+                className={`block px-4 py-2 text-base ${
+                  isPostDisabled ? "text-gray-400 cursor-not-allowed" : "hover:bg-blue-200 hover:text-blue-900"
+                }`}
                 title={isPostDisabled ? postTooltip : ""}
               >
                 New Project
@@ -95,7 +111,9 @@ export default function MobileMenu() {
               <Link
                 to={isPostDisabled ? "#" : "/myprojects"}
                 onClick={preventIfDisabled}
-                className={`block w-full px-4 py-2 text-base ${isPostDisabled ? "text-gray-400 cursor-not-allowed" : "hover:bg-blue-200 hover:text-blue-900"}`}
+                className={`block px-4 py-2 text-base ${
+                  isPostDisabled ? "text-gray-400 cursor-not-allowed" : "hover:bg-blue-200 hover:text-blue-900"
+                }`}
                 title={isPostDisabled ? postTooltip : ""}
               >
                 My Projects
@@ -107,13 +125,16 @@ export default function MobileMenu() {
     });
   }
 
-  // ★ 管理者のときだけ追加（ここが修正点）
   if (isAdmin) {
     items.push({
       key: "admin",
       node: (
-        <div className="text-white">
-          <AdminLink />
+        <div className="w-full">
+          <div className="mx-auto max-w-[12rem]">
+            <div className="w-full">
+              <AdminLink />
+            </div>
+          </div>
         </div>
       ),
     });
@@ -123,8 +144,8 @@ export default function MobileMenu() {
     items.push({
       key: "verify",
       node: (
-        <Button asChild variant="ghost" className="text-base px-3 py-1 text-red-400">
-          <Link to="/verify">Verify Your Account</Link>
+        <Button asChild variant="ghost" className="w-full text-base py-2 text-red-400">
+          <Link className="block w-full text-center" to="/verify">Verify Your Account</Link>
         </Button>
       ),
     });
@@ -134,16 +155,16 @@ export default function MobileMenu() {
     items.push({
       key: "edit",
       node: (
-        <Button asChild variant="ghost" className="text-base px-3 py-1 text-white">
-          <Link to="/edit">Edit profile</Link>
+        <Button asChild variant="ghost" className="w-full text-base py-2 text-white">
+          <Link className="block w-full text-center" to="/edit">Edit profile</Link>
         </Button>
       ),
     });
     items.push({
       key: "logout",
       node: (
-        <Button asChild variant="ghost" className="text-base px-3 py-1 text-white">
-          <Link to="/logout">Log out</Link>
+        <Button asChild variant="ghost" className="w-full text-base py-2 text-white">
+          <Link className="block w-full text-center" to="/logout">Log out</Link>
         </Button>
       ),
     });
@@ -151,22 +172,22 @@ export default function MobileMenu() {
     items.push({
       key: "signup",
       node: (
-        <Button asChild variant="ghost" className="text-base px-3 py-1 text-white">
-          <Link to="/register">Sign up</Link>
+        <Button asChild variant="ghost" className="w-full text-base py-2 text-white">
+          <Link className="block w-full text-center" to="/register">Sign up</Link>
         </Button>
       ),
     });
     items.push({
       key: "login",
       node: (
-        <Button asChild variant="ghost" className="text-base px-3 py-1 text-white">
-          <Link to="/login">Log in</Link>
+        <Button asChild variant="ghost" className="w-full text-base py-2 text-white">
+          <Link className="block w-full text-center" to="/login">Log in</Link>
         </Button>
       ),
     });
   }
 
-  // 段分けロジックはそのままでOK（4なら [arr]）
+  // 段分け（4=1段, 5=3+2, 6=3+3）
   const makeRows = (arr) => {
     const n = arr.length;
     if (n <= 4) return [arr];
@@ -183,7 +204,10 @@ export default function MobileMenu() {
     <>
       {/* ロゴ帯 */}
       <div className="bg-white border-b border-blue-200 px-4 py-2 flex flex-col items-start">
-        <Link to="/" className="text-3xl font-extrabold text-blue-900 hover:text-blue-700 transition-colors duration-200">
+        <Link
+          to="/"
+          className="text-3xl font-extrabold text-blue-900 hover:text-blue-700 transition-colors duration-200"
+        >
           FundMyThesis
         </Link>
         {isLoggedIn && (
@@ -193,7 +217,7 @@ export default function MobileMenu() {
         )}
       </div>
 
-      {/* 段組みメニュー */}
+      {/* 段組みメニュー（各セルとボタンを w-full にして幅を完全均等化） */}
       <nav className="bg-slate-800 text-white border-b shadow-sm">
         {rows.map((row, idx) => {
           const cols =
@@ -201,10 +225,12 @@ export default function MobileMenu() {
             row.length === 4 ? "grid-cols-4" :
             "grid-cols-3";
           return (
-            <div key={idx} className={`grid ${cols} gap-1 px-2 py-2`}>
+            <div key={idx} className={`grid ${cols} gap-0 px-0`}>
               {row.map((it) => (
-                <div key={it.key} className="flex justify-center">
-                  {it.node}
+                <div key={it.key} className="border-r border-white/10 last:border-r-0">
+                  <div className="px-2 py-2">
+                    {it.node}
+                  </div>
                 </div>
               ))}
             </div>
@@ -214,3 +240,5 @@ export default function MobileMenu() {
     </>
   );
 }
+
+
