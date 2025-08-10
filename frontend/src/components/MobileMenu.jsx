@@ -15,36 +15,26 @@ export default function MobileMenu() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    axiosInstance
-      .get("/api/profile")
+    axiosInstance.get("/api/profile")
       .then((res) => setUser(res.data))
       .catch(() => setUser(null));
   }, []);
 
-  const isLoggedIn = !!user;
+ const isLoggedIn  = !!user;
   const isSupporter = user?.role === "supporter";
-  const isVerified = user?.is_verified == 1;
+  const isVerified  = user?.is_verified == 1;
 
-  let isPostDisabled = true;
-  let postTooltip = "";
-  if (!isLoggedIn) {
-    postTooltip = "Please log in";
-  } else if (isSupporter) {
-    postTooltip = "Supporters cannot post";
-  } else if (!isVerified) {
-    postTooltip = "Identity verification is required";
-  } else {
-    isPostDisabled = false;
-  }
+  const isAdmin = user?.role === "admin" || user?.is_admin === 1;
 
+  // ここを追加
+  const isPostDisabled = !isVerified; 
+  const postTooltip = "Please verify your account before posting.";
   const preventIfDisabled = (e) => {
     if (isPostDisabled) {
       e.preventDefault();
-      if (postTooltip) alert(postTooltip);
     }
   };
 
-  // 1) 各メニュー要素を配列に集約
   const items = [];
 
   items.push({
@@ -64,8 +54,7 @@ export default function MobileMenu() {
           onClick={() => {
             window.history.pushState({}, "", "/#explore");
             setTimeout(() => {
-              const el = document.getElementById("explore");
-              if (el) el.scrollIntoView({ behavior: "smooth" });
+              document.getElementById("explore")?.scrollIntoView({ behavior: "smooth" });
             }, 100);
           }}
           variant="ghost"
@@ -85,9 +74,7 @@ export default function MobileMenu() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className={`text-base px-3 py-1 ${
-                isPostDisabled ? "text-gray-400" : "text-white"
-              }`}
+              className={`text-base px-3 py-1 ${isPostDisabled ? "text-gray-400" : "text-white"}`}
               title={isPostDisabled ? postTooltip : ""}
             >
               Projects
@@ -98,11 +85,7 @@ export default function MobileMenu() {
               <Link
                 to={isPostDisabled ? "#" : "/post"}
                 onClick={preventIfDisabled}
-                className={`block w-full px-4 py-2 text-base ${
-                  isPostDisabled
-                    ? "text-gray-400 cursor-not-allowed"
-                    : "hover:bg-blue-200 hover:text-blue-900"
-                }`}
+                className={`block w-full px-4 py-2 text-base ${isPostDisabled ? "text-gray-400 cursor-not-allowed" : "hover:bg-blue-200 hover:text-blue-900"}`}
                 title={isPostDisabled ? postTooltip : ""}
               >
                 New Project
@@ -112,11 +95,7 @@ export default function MobileMenu() {
               <Link
                 to={isPostDisabled ? "#" : "/myprojects"}
                 onClick={preventIfDisabled}
-                className={`block w-full px-4 py-2 text-base ${
-                  isPostDisabled
-                    ? "text-gray-400 cursor-not-allowed"
-                    : "hover:bg-blue-200 hover:text-blue-900"
-                }`}
+                className={`block w-full px-4 py-2 text-base ${isPostDisabled ? "text-gray-400 cursor-not-allowed" : "hover:bg-blue-200 hover:text-blue-900"}`}
                 title={isPostDisabled ? postTooltip : ""}
               >
                 My Projects
@@ -128,15 +107,17 @@ export default function MobileMenu() {
     });
   }
 
-  // Admin
-  items.push({
-    key: "admin",
-    node: (
-      <div className="text-white">
-        <AdminLink />
-      </div>
-    ),
-  });
+  // ★ 管理者のときだけ追加（ここが修正点）
+  if (isAdmin) {
+    items.push({
+      key: "admin",
+      node: (
+        <div className="text-white">
+          <AdminLink />
+        </div>
+      ),
+    });
+  }
 
   if (isLoggedIn && !isVerified && !isSupporter) {
     items.push({
@@ -185,13 +166,12 @@ export default function MobileMenu() {
     });
   }
 
-  // 2) 配列を段に分割（4=1段, 5=3+2, 6=3+3, それ以外は3列ずつ）
+  // 段分けロジックはそのままでOK（4なら [arr]）
   const makeRows = (arr) => {
     const n = arr.length;
-    if (n <= 4) return [arr];               // 1段
-    if (n === 5) return [arr.slice(0, 3), arr.slice(3)]; // 3+2
-    if (n === 6) return [arr.slice(0, 3), arr.slice(3)]; // 3+3
-    // 7以上は3列ずつ
+    if (n <= 4) return [arr];
+    if (n === 5) return [arr.slice(0, 3), arr.slice(3)];
+    if (n === 6) return [arr.slice(0, 3), arr.slice(3)];
     const rows = [];
     for (let i = 0; i < n; i += 3) rows.push(arr.slice(i, i + 3));
     return rows;
@@ -201,12 +181,9 @@ export default function MobileMenu() {
 
   return (
     <>
-      {/* 1段目: ロゴとロール */}
+      {/* ロゴ帯 */}
       <div className="bg-white border-b border-blue-200 px-4 py-2 flex flex-col items-start">
-        <Link
-          to="/"
-          className="text-3xl font-extrabold text-blue-900 hover:text-blue-700 transition-colors duration-200"
-        >
+        <Link to="/" className="text-3xl font-extrabold text-blue-900 hover:text-blue-700 transition-colors duration-200">
           FundMyThesis
         </Link>
         {isLoggedIn && (
@@ -216,17 +193,19 @@ export default function MobileMenu() {
         )}
       </div>
 
-      {/* 2段目: 段組みメニュー（スクロール無し） */}
+      {/* 段組みメニュー */}
       <nav className="bg-slate-800 text-white border-b shadow-sm">
         {rows.map((row, idx) => {
           const cols =
             row.length === 2 ? "grid-cols-2" :
             row.length === 4 ? "grid-cols-4" :
-            "grid-cols-3"; // 3列がデフォ
+            "grid-cols-3";
           return (
             <div key={idx} className={`grid ${cols} gap-1 px-2 py-2`}>
               {row.map((it) => (
-                <div key={it.key} className="flex justify-center">{it.node}</div>
+                <div key={it.key} className="flex justify-center">
+                  {it.node}
+                </div>
               ))}
             </div>
           );
@@ -235,4 +214,3 @@ export default function MobileMenu() {
     </>
   );
 }
-
