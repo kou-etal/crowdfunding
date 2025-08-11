@@ -12,7 +12,7 @@ class VerifyEmailController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
     {
-        // IDとhashからユーザー取得
+      
         $user = User::findOrFail($request->route('id'));
 
         if (! hash_equals((string) $request->route('hash'), sha1($user->getEmailForVerification()))) {

@@ -15,10 +15,9 @@
            
             $email = auth()->user()->email;
     
-            // メール送信
             Mail::to($email)->send(new OrderShipped($cart));
     
-            // カートクリア
+      
             session()->forget('cart');
     
             return response()->json([

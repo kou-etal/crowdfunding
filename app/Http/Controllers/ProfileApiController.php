@@ -74,7 +74,7 @@ class ProfileApiController extends Controller
     public function index()
     {
         return response()->json(
-        User::select('id', 'name')->get()  // 必要なフィールドだけ返す
+        User::select('id', 'name')->get()  
     );
     }
          public function show(Request $request)
@@ -94,7 +94,7 @@ public function updateIntroduction(Request $request)
         'institute' => 'nullable|string|max:255',
     ]);
 
-    // 研究者なら学歴情報など必須チェック
+   
     if ($validated['role'] === 'researcher') {
         foreach (['degree', 'expertise', 'university', 'institute'] as $field) {
             if (empty($validated[$field])) {
@@ -104,7 +104,6 @@ public function updateIntroduction(Request $request)
             }
         }
     } else {
-        // supporterなら null に統一して保存
         $validated['degree'] = null;
         $validated['expertise'] = null;
         $validated['university'] = null;
@@ -121,12 +120,12 @@ public function updateIntroduction(Request $request)
 
 
 
-    // app/Http/Controllers/ProfileApiController.php
+ 
 
 public function uploadImage(Request $request)
 {
     $validated = $request->validate([
-        // 画像ファイル限定＋拡張子制限＋最大 5MB
+    
         'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
     ]);
 
@@ -140,20 +139,7 @@ public function uploadImage(Request $request)
 }
 
 
-/*public function uploadImage(Request $request)
-{
-    $request->validate([
-        'image' => 'required|image|max:2048',
-    ]);
 
-    $path = $request->file('image')->store('profile_images', 'public');
-
-    $user = $request->user();
-    $user->profile_image = '/storage/' . $path;
-    $user->save();
-
-    return response()->json(['profile_image' => $user->profile_image], 200);
-}*/
 }
 
 

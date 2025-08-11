@@ -7,7 +7,7 @@ use App\Models\IdentityVerification;
 
 class IdentityVerificationAdminController extends Controller
 {
-    // 一覧取得
+   
 public function index()
 {
     $verifications = IdentityVerification::with('user')
@@ -40,7 +40,7 @@ public function index()
 }
 
 
-    // 却下処理
+  
     public function reject(Request $request, $id)
     {
         $request->validate([

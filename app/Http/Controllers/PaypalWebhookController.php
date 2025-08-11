@@ -29,7 +29,6 @@ class PayPalWebhookController extends Controller
 
         Log::info('PayPal Webhook Received', ['type' => $type]);
 
-        // 1) 注文承認 → サーバ側で capture（後続で CAPTURE Webhook が来る）
         if ($type === 'CHECKOUT.ORDER.APPROVED') {
             $orderId = $event['resource']['id'] ?? null;
             if ($orderId) {
@@ -43,19 +42,17 @@ class PayPalWebhookController extends Controller
             return response()->json(['status' => 'ok']);
         }
 
-        // 2) キャプチャ完了 → 保存（冪等）
         if ($type === 'PAYMENT.CAPTURE.COMPLETED') {
             $resource = $event['resource'] ?? [];
             $this->saveFromCaptureResource($resource, $event);
             return response()->json(['status' => 'ok']);
         }
 
-        // 不要イベントは無視
         return response()->json(['status' => 'ignored']);
     }
 
     /**
-     * capture API を叩く（Idempotency: orderId 固定）
+     
      * - レスポンスに capture が含まれていれば即保存（Webhook遅延対策）
      */
     private function captureOrder(string $orderId): void
@@ -126,9 +123,6 @@ class PayPalWebhookController extends Controller
         return $res->json('verification_status') === 'SUCCESS';
     }
 
-    /**
-     * PayPal アクセストークン
-     */
     private function getPaypalAccessToken(string $clientId, string $secret): string
     {
         $base = $this->paypalBase();
@@ -143,17 +137,12 @@ class PayPalWebhookController extends Controller
         return $res->json('access_token');
     }
 
-    /**
-     * API ベース URL
-     */
     private function paypalBase(): string
     {
         return rtrim(config('services.paypal.base', 'https://api-m.sandbox.paypal.com'), '/');
     }
 
-    /**
-     * custom_id "userId:projectId" → [userId, projectId]
-     */
+ 
     private function parseCustomId(?string $customId): array
     {
         if ($customId && str_contains($customId, ':')) {
@@ -163,17 +152,14 @@ class PayPalWebhookController extends Controller
         return [null, null];
     }
 
-    /**
-     * Webhook の resource から保存（冪等）
-     * - USD 小数（例 "10.50"）を DECIMAL(12,2) にそのまま保存
-     */
+
     private function saveFromCaptureResource(array $resource, array $fullEvent = []): void
     {
-        // 形B: capture 直オブジェクト
+      
         if (isset($resource['id'], $resource['amount'])) {
             $paymentId = $resource['id'];
-            $amountVal = $resource['amount']['value'] ?? null;          // e.g. "10.50"
-            $currency  = $resource['amount']['currency_code'] ?? 'USD'; // 既定 USD
+            $amountVal = $resource['amount']['value'] ?? null;         
+            $currency  = $resource['amount']['currency_code'] ?? 'USD';
             $customId  = $resource['custom_id'] ?? null;
 
             [$userId, $projectId] = $this->parseCustomId($customId);
@@ -181,7 +167,7 @@ class PayPalWebhookController extends Controller
             return;
         }
 
-        // 形A: order 全体（purchase_units 内に captures）
+       
         if (isset($resource['purchase_units'][0]['payments']['captures'][0])) {
             $pu      = $resource['purchase_units'][0];
             $capture = $pu['payments']['captures'][0];
@@ -196,9 +182,7 @@ class PayPalWebhookController extends Controller
         }
     }
 
-    /**
-     * capture API レスポンスから保存（保険）
-     */
+
     private function saveFromCaptureResponse(array $payload): void
     {
         if (isset($payload['purchase_units'][0]['payments']['captures'][0])) {
@@ -215,11 +199,6 @@ class PayPalWebhookController extends Controller
         }
     }
 
-    /**
-     * 保存（冪等）
-     * - USD 小数をそのまま DECIMAL(12,2) に保存（DB が DECIMAL 型）
-     * - currency はデフォルト USD（PayPal 側も USD 設定前提）
-     */
     private function saveSupport(
         ?string $paymentId,
         ?int $userId,
@@ -233,12 +212,11 @@ class PayPalWebhookController extends Controller
             return;
         }
 
-        // "10.50" → 10.50（小数許容）
         $numeric = is_numeric($amountVal)
             ? (float) $amountVal
             : (float) str_replace(',', '', (string) $amountVal);
 
-        // DECIMAL に入る形へ（丸めは2桁）
+     
         $amountDecimal = number_format($numeric, 2, '.', '');
 
         CrowdfundingSupport::firstOrCreate(

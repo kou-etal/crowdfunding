@@ -12,37 +12,29 @@ use App\Models\CrowdfundingSupport;
 
 class CrowdfundingSupportApiController extends Controller
 {
-    /**
-     * 支援セッション作成（PayPal）
-     * 返り値: { url } 承認URL
-     * - USD 小数（2桁）対応
-     * - 残額超過/達成済みのサーバ側バリデーション
-     */
+
     public function createPaypalSession(Request $request)
     {
         $request->validate([
             'project_id' => 'required|exists:crowdfunding_projects,id',
-            // 1.00 以上、最大2桁小数
             'amount'     => ['required','numeric','min:1','regex:/^\d+(\.\d{1,2})?$/'],
         ]);
 
         $user     = $request->user();
         $project  = CrowdfundingProject::findOrFail($request->project_id);
 
-        // 現在の調達額 (USD) を合計
         $raised    = (float) CrowdfundingSupport::where('project_id', $project->id)->sum('amount');
         $goal      = (float) $project->goal_amount;
         $remaining = max(0.0, round($goal - $raised, 2));
         $reqAmount = round((float) $request->amount, 2);
 
-        // 達成済み
         if ($remaining <= 0.0) {
             throw new HttpResponseException(
                 response()->json(['message' => 'This project already reached its goal.'], 409)
             );
         }
 
-        // 超過支援は弾く
+       
         if ($reqAmount > $remaining) {
             throw new HttpResponseException(
                 response()->json([
@@ -63,7 +55,7 @@ class CrowdfundingSupportApiController extends Controller
         $accessToken = $this->getPaypalAccessToken($clientId, $secret);
 
         $order = $this->createPaypalOrder($accessToken, [
-            'amount'     => $reqAmount, // USD 小数
+            'amount'     => $reqAmount, 
             'user_id'    => (int) $user->id,
             'project_id' => (int) $project->id,
             'title'      => $project->title,
@@ -112,10 +104,10 @@ class CrowdfundingSupportApiController extends Controller
             'purchase_units' => [[
                 'amount' => [
                     'currency_code' => 'USD',
-                    // 文字列で2桁固定
+                 
                     'value' => number_format((float)$data['amount'], 2, '.', ''),
                 ],
-                // Webhook で突き止めるために custom_id を埋める
+                
                 'custom_id' => "{$data['user_id']}:{$data['project_id']}",
             ]],
             'application_context' => [

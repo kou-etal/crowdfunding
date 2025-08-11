@@ -9,7 +9,7 @@ class IdentityVerificationApiController extends Controller
 {
 public function store(Request $request)
 {
-   // Laravelコントローラー
+ 
 
   
 $request->validate([

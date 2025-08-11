@@ -164,7 +164,7 @@ public function show($id)
         'user' => [
             'name' => $project->user->name,
             'full_name' => $project->user->full_name,
-            'email' => $project->user->email, // ← ✅ 追加
+            'email' => $project->user->email,
             'bio' => $project->user->bio,
             'degree' => $project->user->degree,
             'expertise' => $project->user->expertise,

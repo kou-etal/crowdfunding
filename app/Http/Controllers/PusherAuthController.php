@@ -9,7 +9,7 @@ class PusherAuthController extends Controller
 {
     public function authenticate(Request $request)
     {
-        // ユーザーがログインしてるかチェック
+       
         if (!$request->user()) {
             return response()->json(['error' => 'Unauthenticated'], 403);
         }
@@ -24,7 +24,7 @@ class PusherAuthController extends Controller
             ]
         );
 
-        // channel名とsocket_idはPusher.jsから送られてくる
+        
         $auth = $pusher->authorizeChannel(
             $request->input('channel_name'),
             $request->input('socket_id')

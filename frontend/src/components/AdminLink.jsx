@@ -37,6 +37,3 @@ export function AdminLink() {
     </div>
   );
 }
-/*<Link to="/admin/creategroup" className="text-red-500">
-      グル－プ作成
-    </Link>*/
