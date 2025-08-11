@@ -14,32 +14,35 @@ class CrowdfundingSupportApiController extends Controller
 {
     /**
      * 支援セッション作成（PayPal）
-     * 返り値: 承認URLにリダイレクトするための { url }
+     * 返り値: { url } 承認URL
+     * - USD 小数（2桁）対応
+     * - 残額超過/達成済みのサーバ側バリデーション
      */
     public function createPaypalSession(Request $request)
     {
         $request->validate([
             'project_id' => 'required|exists:crowdfunding_projects,id',
-            'amount'     => 'required|integer|min:1',
+            // 1.00 以上、最大2桁小数
+            'amount'     => ['required','numeric','min:1','regex:/^\d+(\.\d{1,2})?$/'],
         ]);
 
-        $user    = $request->user();
-        $project = CrowdfundingProject::findOrFail($request->project_id);
+        $user     = $request->user();
+        $project  = CrowdfundingProject::findOrFail($request->project_id);
 
-        // --- 追加: 残り到達可能額をサーバ側で厳密チェック ---
-        $raised     = (int) CrowdfundingSupport::where('project_id', $project->id)->sum('amount');
-        $goal       = (int) $project->goal_amount;
-        $remaining  = max(0, $goal - $raised);
-        $reqAmount  = (int) $request->amount;
+        // 現在の調達額 (USD) を合計
+        $raised    = (float) CrowdfundingSupport::where('project_id', $project->id)->sum('amount');
+        $goal      = (float) $project->goal_amount;
+        $remaining = max(0.0, round($goal - $raised, 2));
+        $reqAmount = round((float) $request->amount, 2);
 
-        // すでに達成済み
-        if ($remaining <= 0) {
+        // 達成済み
+        if ($remaining <= 0.0) {
             throw new HttpResponseException(
                 response()->json(['message' => 'This project already reached its goal.'], 409)
             );
         }
 
-        // 超過分の指定
+        // 超過支援は弾く
         if ($reqAmount > $remaining) {
             throw new HttpResponseException(
                 response()->json([
@@ -48,7 +51,6 @@ class CrowdfundingSupportApiController extends Controller
                 ], 422)
             );
         }
-        // --- ここまで ---
 
         $clientId = config('services.paypal.client_id');
         $secret   = config('services.paypal.secret');
@@ -61,7 +63,7 @@ class CrowdfundingSupportApiController extends Controller
         $accessToken = $this->getPaypalAccessToken($clientId, $secret);
 
         $order = $this->createPaypalOrder($accessToken, [
-            'amount'     => $reqAmount,   // JPYは整数
+            'amount'     => $reqAmount, // USD 小数
             'user_id'    => (int) $user->id,
             'project_id' => (int) $project->id,
             'title'      => $project->title,
@@ -92,37 +94,33 @@ class CrowdfundingSupportApiController extends Controller
 
         if (!$res->successful()) {
             Log::error('PayPal Access Token Error', ['status' => $res->status(), 'body' => $res->body()]);
-            abort(500, 'PayPal認証に失敗しました');
+            abort(500, 'Failed to authenticate with PayPal.');
         }
 
         return $res->json('access_token');
     }
 
     /**
-     * PayPal 注文作成
+     * PayPal 注文作成（USD 小数）
      */
     private function createPaypalOrder(string $accessToken, array $data): array
     {
         $base = $this->paypalBase();
-
-        // 小数不可。値は文字列で送るのが安全
-        $amountValue = (string) $data['amount'];
 
         $payload = [
             'intent' => 'CAPTURE',
             'purchase_units' => [[
                 'amount' => [
                     'currency_code' => 'USD',
-                    'value' => $amountValue,
+                    // 文字列で2桁固定
+                    'value' => number_format((float)$data['amount'], 2, '.', ''),
                 ],
-                // 後でwebhookで誰の/どのプロジェクトか判別
+                // Webhook で突き止めるために custom_id を埋める
                 'custom_id' => "{$data['user_id']}:{$data['project_id']}",
             ]],
             'application_context' => [
-                // ここは表示用。成功/キャンセルの処理はサーバのwebhookで行う
                 'return_url' => rtrim(config('app.frontend_url'), '/') . '/success',
                 'cancel_url' => rtrim(config('app.frontend_url'), '/') . '/cancel',
-                // 任意：UIの微調整
                 'shipping_preference' => 'NO_SHIPPING',
                 'user_action' => 'PAY_NOW',
             ],
@@ -132,7 +130,7 @@ class CrowdfundingSupportApiController extends Controller
 
         if (!$res->successful()) {
             Log::error('PayPal Order Create Error', ['status' => $res->status(), 'body' => $res->body()]);
-            abort(500, 'PayPal注文の作成に失敗しました');
+            abort(500, 'Failed to create PayPal order.');
         }
 
         return $res->json();
@@ -140,7 +138,6 @@ class CrowdfundingSupportApiController extends Controller
 
     /**
      * サンドボックス/本番のベースURL
-     * .env の PAYPAL_BASE で上書き可（例: https://api-m.paypal.com）
      */
     private function paypalBase(): string
     {

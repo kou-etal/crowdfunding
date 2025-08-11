@@ -11,115 +11,52 @@ use Carbon\Carbon;
 class PayPalWebhookController extends Controller
 {
     /**
-     * PayPal Webhook エンドポイント
-     * - CHECKOUT.ORDER.APPROVED: サーバ側で /capture を実行
-     * - PAYMENT.CAPTURE.COMPLETED: DBに支援を保存
+     * Webhook 入口
+     * - 署名検証（本番推奨。local のみスキップ可）
+     * - CHECKOUT.ORDER.APPROVED: サーバ側で capture 実行（冪等）
+     * - PAYMENT.CAPTURE.COMPLETED: DB に保存（冪等）
      */
     public function handleWebhook(Request $request)
     {
-        $event = $request->all();
-        Log::info('PayPal Webhook Received', $event);
+        $raw = $request->getContent();
+        $event = json_decode($raw, true) ?? [];
+        $type  = $event['event_type'] ?? null;
 
-        $type = $event['event_type'] ?? null;
+        if (!$this->verifyWebhookSignature($request, $raw)) {
+            Log::warning('PayPal webhook: signature verification failed');
+            return response()->json(['status' => 'invalid-signature'], 400);
+        }
 
-        // 1) 注文が承認されたらサーバ側で即キャプチャ
+        Log::info('PayPal Webhook Received', ['type' => $type]);
+
+        // 1) 注文承認 → サーバ側で capture（後続で CAPTURE Webhook が来る）
         if ($type === 'CHECKOUT.ORDER.APPROVED') {
             $orderId = $event['resource']['id'] ?? null;
-            Log::info('ORDER.APPROVED received', ['order_id' => $orderId]);
-
             if ($orderId) {
                 try {
-                    $this->captureOrder($orderId); // 成功すると後で CAPTURE のWebhookが飛んでくる
-                    Log::info('PayPal capture triggered', ['order_id' => $orderId]);
+                    $this->captureOrder($orderId);
+                    Log::info('Capture triggered', ['order_id' => $orderId]);
                 } catch (\Throwable $e) {
-                    Log::error('PayPal capture failed', [
-                        'order_id' => $orderId,
-                        'error'    => $e->getMessage(),
-                    ]);
+                    Log::error('Capture failed', ['order_id' => $orderId, 'error' => $e->getMessage()]);
                 }
-            } else {
-                Log::warning('ORDER.APPROVED without resource.id');
             }
             return response()->json(['status' => 'ok']);
         }
 
-        // 2) キャプチャ完了の通知で保存（payload 形A/形B 両対応）
+        // 2) キャプチャ完了 → 保存（冪等）
         if ($type === 'PAYMENT.CAPTURE.COMPLETED') {
-            $res = $event['resource'] ?? [];
-
-            // 形A: order全体スタイル（purchase_units 内に captures）
-            if (isset($res['purchase_units'][0]['payments']['captures'][0])) {
-                $pu       = $res['purchase_units'][0];
-                $capture  = $pu['payments']['captures'][0];
-
-                $paymentId = $capture['id'] ?? null;
-                $amountVal = $capture['amount']['value'] ?? null;
-                $currency  = $capture['amount']['currency_code'] ?? null;
-                $customId  = $capture['custom_id'] ?? ($pu['custom_id'] ?? null);
-
-            } else {
-                // 形B: capture直オブジェクト
-                $paymentId = $res['id'] ?? null;
-                $amountVal = $res['amount']['value'] ?? null;
-                $currency  = $res['amount']['currency_code'] ?? null;
-                $customId  = $res['custom_id'] ?? null;
-            }
-
-            [$userId, $projectId] = $this->parseCustomId($customId);
-            Log::info('CAPTURE parsed', compact('paymentId','amountVal','currency','customId','userId','projectId'));
-
-            if ($paymentId && $userId && $projectId && $amountVal) {
-                CrowdfundingSupport::firstOrCreate(
-                    ['payment_id' => $paymentId],
-                    [
-                        'user_id'      => (int)$userId,
-                        'project_id'   => (int)$projectId,
-                        'amount'       => (int)$amountVal, // JPYは整数
-                        'currency'     => $currency,
-                        'supported_at' => Carbon::now(),
-                    ]
-                );
-                Log::info('Saved PayPal support (CAPTURE)', ['payment_id' => $paymentId]);
-            } else {
-                Log::warning('CAPTURE missing fields', compact('paymentId','amountVal','currency','customId','userId','projectId'));
-            }
-
+            $resource = $event['resource'] ?? [];
+            $this->saveFromCaptureResource($resource, $event);
             return response()->json(['status' => 'ok']);
         }
 
-        // 互換: 旧 REST の SALE イベントに来た場合（任意）
-        if ($type === 'PAYMENT.SALE.COMPLETED') {
-            $resource  = $event['resource'] ?? [];
-            $paymentId = $resource['parent_payment'] ?? null;
-            $amountVal = $resource['amount']['total'] ?? null;
-            $currency  = $resource['amount']['currency'] ?? null;
-            [$userId, $projectId] = $this->parseCustomId($resource['custom'] ?? null);
-
-            if ($paymentId && $userId && $projectId && $amountVal) {
-                CrowdfundingSupport::firstOrCreate(
-                    ['payment_id' => $paymentId],
-                    [
-                        'user_id'      => (int)$userId,
-                        'project_id'   => (int)$projectId,
-                        'amount'       => (int)$amountVal,
-                        'currency'     => $currency,
-                        'supported_at' => Carbon::now(),
-                    ]
-                );
-                Log::info('Saved PayPal support (SALE)', ['payment_id' => $paymentId]);
-            } else {
-                Log::warning('SALE missing fields', compact('paymentId','amountVal','currency','userId','projectId'));
-            }
-
-            return response()->json(['status' => 'ok']);
-        }
-
-        // その他は無視
+        // 不要イベントは無視
         return response()->json(['status' => 'ignored']);
     }
 
     /**
-     * 承認済みオーダーをキャプチャ
+     * capture API を叩く（Idempotency: orderId 固定）
+     * - レスポンスに capture が含まれていれば即保存（Webhook遅延対策）
      */
     private function captureOrder(string $orderId): void
     {
@@ -128,37 +65,69 @@ class PayPalWebhookController extends Controller
         $base     = $this->paypalBase();
 
         if (!$clientId || !$secret) {
-            Log::error('PayPal creds missing', compact('clientId','secret'));
-            abort(500, 'PayPal credentials not set');
+            throw new \RuntimeException('PayPal credentials not set');
         }
 
         $accessToken = $this->getPaypalAccessToken($clientId, $secret);
 
         $res = Http::withToken($accessToken)
             ->withHeaders([
-                'PayPal-Request-Id' => 'cap_' . $orderId . '_' . uniqid(),
+                'PayPal-Request-Id' => 'cap_'.$orderId, // 冪等キー
             ])
             ->asJson()
-            ->post("{$base}/v2/checkout/orders/{$orderId}/capture", (object)[]);
+            ->post("{$base}/v2/checkout/orders/{$orderId}/capture", new \stdClass());
 
-        Log::info('Capture API response', ['status' => $res->status(), 'body' => $res->body()]);
+        Log::info('Capture API response', ['status' => $res->status()]);
 
         if (!$res->successful()) {
             throw new \RuntimeException('Capture API failed: '.$res->status().' '.$res->body());
         }
 
-        // ★ ここで即時保存（Webhookは保険）
-        $payload = $res->json();
-        try {
-            $this->saveSupportFromCaptureResponse($payload);
-            Log::info('Saved from capture response');
-        } catch (\Throwable $e) {
-            Log::error('Save from capture response failed', ['e' => $e->getMessage()]);
-        }
+        // 保険保存
+        $this->saveFromCaptureResponse($res->json());
     }
 
     /**
-     * アクセストークン取得
+     * Webhook 署名検証
+     * - services.paypal.webhook_id を .env に設定
+     * - local 環境のみ未設定を許容
+     */
+    private function verifyWebhookSignature(Request $request, string $rawBody): bool
+    {
+        $webhookId = config('services.paypal.webhook_id');
+        if (!$webhookId) {
+            Log::warning('WEBHOOK_ID not set; skipping verification (local only)');
+            return app()->environment('local'); // 本番は必ず設定
+        }
+
+        $clientId = config('services.paypal.client_id');
+        $secret   = config('services.paypal.secret');
+        $base     = $this->paypalBase();
+        $access   = $this->getPaypalAccessToken($clientId, $secret);
+
+        $payload = [
+            'auth_algo'         => $request->header('PayPal-Auth-Algo'),
+            'cert_url'          => $request->header('PayPal-Cert-Url'),
+            'transmission_id'   => $request->header('PayPal-Transmission-Id'),
+            'transmission_sig'  => $request->header('PayPal-Transmission-Sig'),
+            'transmission_time' => $request->header('PayPal-Transmission-Time'),
+            'webhook_id'        => $webhookId,
+            'webhook_event'     => json_decode($rawBody, true),
+        ];
+
+        $res = Http::withToken($access)
+            ->post("{$base}/v1/notifications/verify-webhook-signature", $payload);
+
+        if (!$res->successful()) {
+            Log::warning('verify-webhook-signature failed', ['status' => $res->status(), 'body' => $res->body()]);
+            return false;
+        }
+
+        return $res->json('verification_status') === 'SUCCESS';
+    }
+
+    /**
+     * PayPal アクセストークン
      */
     private function getPaypalAccessToken(string $clientId, string $secret): string
     {
@@ -166,18 +135,16 @@ class PayPalWebhookController extends Controller
 
         $res = Http::withBasicAuth($clientId, $secret)
             ->asForm()
-            ->post("{$base}/v1/oauth2/token", [
-                'grant_type' => 'client_credentials',
-            ]);
+            ->post("{$base}/v1/oauth2/token", ['grant_type' => 'client_credentials']);
 
         if (!$res->successful()) {
             throw new \RuntimeException('PayPal Access Token Error: '.$res->body());
         }
-        return $res->json()['access_token'];
+        return $res->json('access_token');
     }
 
     /**
-     * config/services.php の base を使う
+     * API ベース URL
      */
     private function paypalBase(): string
     {
@@ -185,7 +152,7 @@ class PayPalWebhookController extends Controller
     }
 
     /**
-     * "userId:projectId" 形式の custom_id を分解
+     * custom_id "userId:projectId" → [userId, projectId]
      */
     private function parseCustomId(?string $customId): array
     {
@@ -197,46 +164,103 @@ class PayPalWebhookController extends Controller
     }
 
     /**
-     * capture API のレスポンスから保存
+     * Webhook の resource から保存（冪等）
+     * - USD 小数（例 "10.50"）を DECIMAL(12,2) にそのまま保存
      */
-    private function saveSupportFromCaptureResponse(array $payload): void
+    private function saveFromCaptureResource(array $resource, array $fullEvent = []): void
     {
-        // デフォルト初期化
-        $paymentId = $amountVal = $currency = $customId = null;
+        // 形B: capture 直オブジェクト
+        if (isset($resource['id'], $resource['amount'])) {
+            $paymentId = $resource['id'];
+            $amountVal = $resource['amount']['value'] ?? null;          // e.g. "10.50"
+            $currency  = $resource['amount']['currency_code'] ?? 'USD'; // 既定 USD
+            $customId  = $resource['custom_id'] ?? null;
 
-        // 形A: purchase_units 内
+            [$userId, $projectId] = $this->parseCustomId($customId);
+            $this->saveSupport($paymentId, $userId, $projectId, $amountVal, $currency, $fullEvent);
+            return;
+        }
+
+        // 形A: order 全体（purchase_units 内に captures）
+        if (isset($resource['purchase_units'][0]['payments']['captures'][0])) {
+            $pu      = $resource['purchase_units'][0];
+            $capture = $pu['payments']['captures'][0];
+
+            $paymentId = $capture['id'] ?? null;
+            $amountVal = $capture['amount']['value'] ?? null;
+            $currency  = $capture['amount']['currency_code'] ?? 'USD';
+            $customId  = $capture['custom_id'] ?? ($pu['custom_id'] ?? null);
+
+            [$userId, $projectId] = $this->parseCustomId($customId);
+            $this->saveSupport($paymentId, $userId, $projectId, $amountVal, $currency, $fullEvent);
+        }
+    }
+
+    /**
+     * capture API レスポンスから保存（保険）
+     */
+    private function saveFromCaptureResponse(array $payload): void
+    {
         if (isset($payload['purchase_units'][0]['payments']['captures'][0])) {
             $pu      = $payload['purchase_units'][0];
             $capture = $pu['payments']['captures'][0];
+
             $paymentId = $capture['id'] ?? null;
             $amountVal = $capture['amount']['value'] ?? null;
-            $currency  = $capture['amount']['currency_code'] ?? null;
+            $currency  = $capture['amount']['currency_code'] ?? 'USD';
             $customId  = $capture['custom_id'] ?? ($pu['custom_id'] ?? null);
 
-        // 形B: capture直オブジェクト
-        } elseif (isset($payload['id'], $payload['amount'])) {
-            $paymentId = $payload['id'];
-            $amountVal = $payload['amount']['value'] ?? null;
-            $currency  = $payload['amount']['currency_code'] ?? null;
-            $customId  = $payload['custom_id'] ?? null;
-        }
-
-        [$userId, $projectId] = $this->parseCustomId($customId);
-
-        if ($paymentId && $userId && $projectId && $amountVal) {
-            CrowdfundingSupport::firstOrCreate(
-                ['payment_id' => $paymentId],
-                [
-                    'user_id'      => (int)$userId,
-                    'project_id'   => (int)$projectId,
-                    'amount'       => (int)$amountVal, // JPYは整数
-                    'currency'     => $currency,
-                    'supported_at' => Carbon::now(),
-                ]
-            );
-        } else {
-            throw new \RuntimeException('Missing fields on capture response');
+            [$userId, $projectId] = $this->parseCustomId($customId);
+            $this->saveSupport($paymentId, $userId, $projectId, $amountVal, $currency, $payload);
         }
     }
+
+    /**
+     * 保存（冪等）
+     * - USD 小数をそのまま DECIMAL(12,2) に保存（DB が DECIMAL 型）
+     * - currency はデフォルト USD（PayPal 側も USD 設定前提）
+     */
+    private function saveSupport(
+        ?string $paymentId,
+        ?int $userId,
+        ?int $projectId,
+        $amountVal,
+        ?string $currency,
+        array $rawPayload = []
+    ): void {
+        if (!$paymentId || !$userId || !$projectId || $amountVal === null) {
+            Log::warning('saveSupport: missing fields', compact('paymentId','userId','projectId','amountVal','currency'));
+            return;
+        }
+
+        // "10.50" → 10.50（小数許容）
+        $numeric = is_numeric($amountVal)
+            ? (float) $amountVal
+            : (float) str_replace(',', '', (string) $amountVal);
+
+        // DECIMAL に入る形へ（丸めは2桁）
+        $amountDecimal = number_format($numeric, 2, '.', '');
+
+        CrowdfundingSupport::firstOrCreate(
+            ['payment_id' => $paymentId],
+            [
+                'user_id'      => $userId,
+                'project_id'   => $projectId,
+                'amount'       => $amountDecimal,
+                'currency'     => strtoupper($currency ?? 'USD'),
+                'supported_at' => Carbon::now(),
+                'raw_payload'  => !empty($rawPayload) ? json_encode($rawPayload) : null,
+                'provider'     => 'paypal',
+            ]
+        );
+
+        Log::info('Support saved', [
+            'payment_id' => $paymentId,
+            'amount'     => $amountDecimal,
+            'currency'   => strtoupper($currency ?? 'USD'),
+        ]);
+    }
 }
+
+
 
