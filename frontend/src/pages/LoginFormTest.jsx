@@ -23,17 +23,13 @@ export function LoginFormTest() {
       await axiosInstance.get("/sanctum/csrf-cookie", { withCredentials: true });
       await axiosInstance.post(
         "/login",
-        {
-          email,
-          password,
-          password_confirmation: password,
-        },
+        { email, password, password_confirmation: password },
         { withCredentials: true }
       );
       navigate("/");
     } catch (err) {
-      console.error("Login failed", err.response?.data);
-      if (err.response?.data?.errors) {
+      console.error("Login failed", err?.response?.data);
+      if (err?.response?.data?.errors) {
         setErrors(err.response.data.errors);
       } else {
         setErrors({ general: ["Invalid login credentials."] });
@@ -45,18 +41,13 @@ export function LoginFormTest() {
 
   return (
     <AppLayout>
-      <Card className="max-w-xl mx-auto mt-20 shadow-md">
+      <Card className="max-w-xl mx-auto mt-16 md:mt-20 shadow-md">
         <CardContent className="p-8 space-y-6">
-          {/* 見出し */}
           <h1 className="text-2xl font-bold text-center text-blue-900">
             Log in to FundMyThesis
           </h1>
 
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-4"
-            aria-label="Login form"
-          >
+          <form onSubmit={handleSubmit} className="space-y-4" aria-label="Login form">
             {/* Email */}
             <div>
               <Label htmlFor="email">
@@ -66,6 +57,9 @@ export function LoginFormTest() {
                 id="email"
                 name="email"
                 type="email"
+                autoComplete="email"       // ★端末間の入力補助差を統一
+                autoCapitalize="none"
+                spellCheck={false}
                 aria-required="true"
                 aria-describedby="email-desc"
                 value={email}
@@ -90,6 +84,9 @@ export function LoginFormTest() {
                 id="password"
                 name="password"
                 type="password"
+                autoComplete="current-password"  // ★Samsungのオートフィル挙動を安定化
+                autoCapitalize="none"
+                spellCheck={false}
                 aria-required="true"
                 aria-describedby="password-desc"
                 value={password}
@@ -101,9 +98,7 @@ export function LoginFormTest() {
                 Enter your account password
               </span>
               {errors.password && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.password[0]}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{errors.password[0]}</p>
               )}
             </div>
 
@@ -114,19 +109,19 @@ export function LoginFormTest() {
               </p>
             )}
 
-            {/* ボタン */}
             <Button
               type="submit"
               className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
               disabled={loading}
             >
               {loading ? "Logging in..." : "Log in"}
-            </Button>
+            </Button> 
           </form>
         </CardContent>
       </Card>
     </AppLayout>
   );
 }
+
 
 

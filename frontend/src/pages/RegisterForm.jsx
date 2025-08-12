@@ -19,7 +19,7 @@ export function RegisterForm() {
 
   const navigate = useNavigate();
 
-  // リアルタイムでパスワード長を監視
+  // パスワード長の即時バリデーション
   useEffect(() => {
     setPasswordTooShort(password.length > 0 && password.length < 8);
   }, [password]);
@@ -36,17 +36,22 @@ export function RegisterForm() {
     }
 
     try {
-      await axiosInstance.get("/sanctum/csrf-cookie");
-      const res = await axiosInstance.post("/api/register", {
-        name,
-        email,
-        password,
-        password_confirmation: passwordConfirm,
-      });
+      // ★ CSRFとCookieを確実に
+      await axiosInstance.get("/sanctum/csrf-cookie", { withCredentials: true });
+      const res = await axiosInstance.post(
+        "/api/register",
+        {
+          name: name.trim(),
+          email: email.trim(),
+          password,
+          password_confirmation: passwordConfirm,
+        },
+        { withCredentials: true }
+      );
       setMessage(res.data.message);
     } catch (err) {
-      console.error("Registration failed:", err.response?.data);
-      if (err.response?.data?.errors) {
+      console.error("Registration failed:", err?.response?.data);
+      if (err?.response?.data?.errors) {
         setErrors(err.response.data.errors);
       }
     } finally {
@@ -54,11 +59,10 @@ export function RegisterForm() {
     }
   };
 
+  // 成功後2秒でトップへ
   useEffect(() => {
     if (message) {
-      const timer = setTimeout(() => {
-        navigate("/");
-      }, 2000);
+      const timer = setTimeout(() => navigate("/"), 2000);
       return () => clearTimeout(timer);
     }
   }, [message, navigate]);
@@ -72,7 +76,6 @@ export function RegisterForm() {
           </h1>
 
           <form onSubmit={handleSubmit} className="space-y-4" aria-label="Registration form">
-            
             {/* Username */}
             <div>
               <Label htmlFor="name">
@@ -82,6 +85,9 @@ export function RegisterForm() {
                 id="name"
                 name="name"
                 type="text"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
                 aria-required="true"
                 aria-describedby="username-desc"
                 value={name}
@@ -92,6 +98,7 @@ export function RegisterForm() {
               <span id="username-desc" className="sr-only">
                 Enter your username
               </span>
+              {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name[0]}</p>}
             </div>
 
             {/* Email */}
@@ -103,6 +110,9 @@ export function RegisterForm() {
                 id="email"
                 name="email"
                 type="email"
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
                 aria-required="true"
                 aria-describedby="email-desc"
                 value={email}
@@ -110,12 +120,8 @@ export function RegisterForm() {
                 placeholder="e.g. example@mail.com"
                 required
               />
-              <span id="email-desc" className="sr-only">
-                Enter a valid email address
-              </span>
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>
-              )}
+              <span id="email-desc" className="sr-only">Enter a valid email address</span>
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>}
             </div>
 
             {/* Password */}
@@ -127,6 +133,10 @@ export function RegisterForm() {
                 id="password"
                 name="password"
                 type="password"
+                autoComplete="new-password"
+                autoCapitalize="none"
+                spellCheck={false}
+                minLength={8}
                 aria-required="true"
                 aria-describedby="password-desc"
                 value={password}
@@ -142,9 +152,7 @@ export function RegisterForm() {
                   Password must be at least 8 characters long.
                 </p>
               )}
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password[0]}</p>
-              )}
+              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password[0]}</p>}
             </div>
 
             {/* Confirm Password */}
@@ -156,6 +164,9 @@ export function RegisterForm() {
                 id="passwordConfirm"
                 name="password_confirmation"
                 type="password"
+                autoComplete="new-password"
+                autoCapitalize="none"
+                spellCheck={false}
                 aria-required="true"
                 aria-describedby="password-confirm-desc"
                 value={passwordConfirm}
@@ -167,20 +178,23 @@ export function RegisterForm() {
                 Re-enter the password to confirm
               </span>
               {errors.password_confirmation && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.password_confirmation[0]}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{errors.password_confirmation[0]}</p>
               )}
             </div>
 
-            {/* Submit Button */}
-            <Button type="submit" className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              disabled={loading}
+            >
               {loading ? "Registering..." : "Register"}
             </Button>
           </form>
 
           {message && (
-            <p className="text-green-600 text-center font-medium mt-4">{message}</p>
+            <p className="text-green-600 text-center font-medium mt-4" aria-live="polite">
+              {message}
+            </p>
           )}
         </CardContent>
       </Card>

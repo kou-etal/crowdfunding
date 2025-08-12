@@ -46,56 +46,30 @@ export function ProfileEdit() {
       .catch(err => console.error('Failed to fetch profile', err));
   }, []);
 
-  const handleChange = e => {
-    setProfile(prev => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleDegreeChange = value => {
-    setProfile(prev => ({ ...prev, degree: value }));
-  };
-
-  const handleRoleChange = value => {
-    setProfile(prev => ({ ...prev, role: value }));
-  };
+  const handleChange = e => setProfile(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleDegreeChange = value => setProfile(prev => ({ ...prev, degree: value }));
+  const handleRoleChange = value => setProfile(prev => ({ ...prev, role: value }));
 
   const handleImageChange = e => {
     const file = e.target.files?.[0] || null;
     setImageError('');
     setImageFile(null);
-
     if (!file) return;
-
-    // フロント側バリデーション：画像のみ / 5MBまで
     const isImage = file.type.startsWith('image/');
-    const maxBytes = 5 * 1024 * 1024; // 5MB
-
-    if (!isImage) {
-      setImageError('Please select an image file (jpg, png, webp, etc.). PDFs are not allowed.');
-      return;
-    }
-    if (file.size > maxBytes) {
-      setImageError('Image is too large. Max size is 5MB.');
-      return;
-    }
-
+    const maxBytes = 5 * 1024 * 1024;
+    if (!isImage) { setImageError('Please select an image file (jpg, png, webp, etc.). PDFs are not allowed.'); return; }
+    if (file.size > maxBytes) { setImageError('Image is too large. Max size is 5MB.'); return; }
     setImageFile(file);
   };
 
   const handleImageUpload = async () => {
-    if (!imageFile) {
-      setImageError('Please select an image first.');
-      return;
-    }
-    if (imageError) return; // エラーがある場合は送らない
-
+    if (!imageFile) { setImageError('Please select an image first.'); return; }
+    if (imageError) return;
     const formData = new FormData();
     formData.append('image', imageFile);
-
     try {
       setLoading(true);
-      await axiosInstance.post('/api/profile-image', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await axiosInstance.post('/api/profile-image', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       const res = await axiosInstance.get('/api/profile');
       setProfile(res.data);
       setImageFile(null);
@@ -126,29 +100,29 @@ export function ProfileEdit() {
   return (
     <AppLayout>
       <Card className="max-w-3xl mx-auto w-full mt-20 mb-8 shadow-md">
-        <CardContent className="p-8 space-y-6">
+        <CardContent className="p-8 space-y-6 min-w-0">
           <h2 className="text-2xl font-bold text-center text-blue-900">Edit Profile</h2>
 
-          <div className="flex flex-col items-center space-y-4">
+          <div className="flex flex-col items-center space-y-4 min-w-0">
             {profile.profile_image && (
               <img
                 src={profile.profile_image}
                 alt="Profile"
                 className="w-32 h-32 rounded-full object-cover border"
+                loading="lazy"
+                decoding="async"
               />
             )}
-            <div className="space-y-2 text-center">
+            <div className="space-y-2 text-center w-full max-w-md mx-auto">
               <Label htmlFor="profile_image">Profile Image <span className="text-red-500">*</span></Label>
               <Input
                 id="profile_image"
                 type="file"
-                accept="image/*"             // ← 画像以外の選択をUIで抑止
+                accept="image/*"
                 onChange={handleImageChange}
                 aria-label="Select profile image"
               />
-              {imageError && (
-                <p className="text-sm text-red-600">{imageError}</p>
-              )}
+              {imageError && <p className="text-sm text-red-600 break-words">{imageError}</p>}
               <p className="text-sm text-gray-500">Upload a clear face photo. (Max 5MB)</p>
               <Button
                 type="button"
@@ -161,7 +135,7 @@ export function ProfileEdit() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6 min-w-0">
             <div>
               <Label htmlFor="name">User Name <span className="text-red-500">*</span></Label>
               <Input
@@ -203,12 +177,8 @@ export function ProfileEdit() {
 
             <div>
               <Label htmlFor="role">Role <span className="text-red-500">*</span></Label>
-              <Select
-                value={profile.role}
-                onValueChange={handleRoleChange}
-                required
-              >
-                <SelectTrigger id="role">
+              <Select value={profile.role} onValueChange={handleRoleChange} required>
+                <SelectTrigger id="role" className="w-full">
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -216,7 +186,7 @@ export function ProfileEdit() {
                   <SelectItem value="researcher">Researcher</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 break-words">
                 Choose "Researcher" if you plan to post campaigns.
                 Researchers are required to complete identity verification, which includes providing your supervisor's full name, affiliation, and email address.*
               </p>
@@ -226,12 +196,8 @@ export function ProfileEdit() {
               <>
                 <div>
                   <Label htmlFor="degree">Degree <span className="text-red-500">*</span></Label>
-                  <Select
-                    value={profile.degree}
-                    onValueChange={handleDegreeChange}
-                    required
-                  >
-                    <SelectTrigger id="degree">
+                  <Select value={profile.degree} onValueChange={handleDegreeChange} required>
+                    <SelectTrigger id="degree" className="w-full">
                       <SelectValue placeholder="Select your degree" />
                     </SelectTrigger>
                     <SelectContent>
@@ -295,4 +261,3 @@ export function ProfileEdit() {
     </AppLayout>
   );
 }
-

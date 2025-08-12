@@ -9,7 +9,7 @@ import AppLayout from "../components/AppLayout";
 import { useNavigate } from "react-router-dom";
 
 export function IdentityVerificationForm() {
-  const navigate = useNavigate(); // ★ 追加
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     supervisor_name: "",
@@ -21,14 +21,36 @@ export function IdentityVerificationForm() {
   const [faceImage, setFaceImage] = useState(null);
   const [docImage, setDocImage] = useState(null);
   const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false); // 二重送信ガードにも使う
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
-
   const handleCheckboxChange = (checked) => {
     setForm((prev) => ({ ...prev, honor_statement: !!checked }));
+  };
+
+  // ★ 画像バリデーション（タイプ & 5MB）
+  const validateImage = (file) => {
+    if (!file) return "File is required.";
+    if (!file.type?.startsWith("image/")) return "Please select an image file.";
+    const maxBytes = 5 * 1024 * 1024;
+    if (file.size > maxBytes) return "Image is too large. Max size is 5MB.";
+    return "";
+  };
+
+  const onFaceChange = (e) => {
+    const f = e.target.files?.[0] || null;
+    const msg = f ? validateImage(f) : "Face photo is required.";
+    setFaceImage(f);
+    setErrors((prev) => ({ ...prev, faceImage: msg || undefined }));
+  };
+
+  const onDocChange = (e) => {
+    const f = e.target.files?.[0] || null;
+    const msg = f ? validateImage(f) : "Identification document photo is required.";
+    setDocImage(f);
+    setErrors((prev) => ({ ...prev, docImage: msg || undefined }));
   };
 
   const validateForm = () => {
@@ -45,14 +67,11 @@ export function IdentityVerificationForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // ★ 二重送信の早期リターン
     if (loading) return;
     if (!validateForm()) return;
 
     setLoading(true);
     try {
-      // 画像アップロード
       const imageForm = new FormData();
       imageForm.append("face_image", faceImage);
       imageForm.append("document_image", docImage);
@@ -65,7 +84,6 @@ export function IdentityVerificationForm() {
 
       const { face_image_url, document_image_url } = uploadRes.data;
 
-      // 本体データ送信
       await axiosInstance.post("/api/identity-verification", {
         face_image_path: face_image_url,
         document_image_path: document_image_url,
@@ -75,13 +93,10 @@ export function IdentityVerificationForm() {
         supervisor_affiliation: form.supervisor_affiliation,
       });
 
-      // ★ 文言を丁寧に
       alert(
-        "Submission completed successfully!\n\n" +
-        "Your request has been received. Please wait while we review and approve your verification."
+        "Submission completed successfully!\n\nYour request has been received. Please wait while we review and approve your verification."
       );
-
-      navigate("/"); // ★ ここでエラーになっていた
+      navigate("/");
     } catch (err) {
       console.error("Submission failed", err?.response?.data || err);
       alert("Failed to submit. Please try again.");
@@ -92,46 +107,49 @@ export function IdentityVerificationForm() {
 
   return (
     <AppLayout>
-      <Card className="max-w-3xl w-full mx-auto mt-20 mb-10 shadow-md">
-        <CardContent className="space-y-8 p-8">
-          <h2 className="text-3xl font-bold text-center text-blue-900">
-            Identity Verification Form
-          </h2>
+      <Card className="max-w-3xl w/full mx-auto mt-20 mb-10 shadow-md">
+        <CardContent className="space-y-8 p-8 min-w-0">
+          <h2 className="text-3xl font-bold text-center text-blue-900">Identity Verification Form</h2>
 
-          <p className="text-sm text-gray-700 text-center">
-            Acceptable identification documents:<br />
-            <span className="font-medium">
-              Passport, Driver's License, or National ID Card
-            </span>
+          <p className="text-sm text-gray-700 text-center break-words">
+            Acceptable identification documents:
+            <br />
+            <span className="font-medium">Passport, Driver's License, or National ID Card</span>
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" aria-label="Identity verification form">
             <div>
-              <Label htmlFor="faceImage">Face photo<span className="text-red-500">*</span></Label>
+              <Label htmlFor="faceImage">
+                Face photo <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="faceImage"
                 type="file"
                 accept="image/*"
-                onChange={(e) => setFaceImage(e.target.files?.[0] || null)}
+                onChange={onFaceChange}
                 required
               />
-              {errors.faceImage && <p className="text-red-500 text-sm mt-1">{errors.faceImage}</p>}
+              {errors.faceImage && <p className="text-red-500 text-sm mt-1 break-words">{errors.faceImage}</p>}
             </div>
 
             <div>
-              <Label htmlFor="docImage">Photo of your identification document <span className="text-red-500">*</span></Label>
+              <Label htmlFor="docImage">
+                Photo of your identification document <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="docImage"
                 type="file"
                 accept="image/*"
-                onChange={(e) => setDocImage(e.target.files?.[0] || null)}
+                onChange={onDocChange}
                 required
               />
-              {errors.docImage && <p className="text-red-500 text-sm mt-1">{errors.docImage}</p>}
+              {errors.docImage && <p className="text-red-500 text-sm mt-1 break-words">{errors.docImage}</p>}
             </div>
 
             <div>
-              <Label htmlFor="supervisor_name">Supervisor's Full Name <span className="text-red-500">*</span></Label>
+              <Label htmlFor="supervisor_name">
+                Supervisor's Full Name <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="supervisor_name"
                 name="supervisor_name"
@@ -143,11 +161,16 @@ export function IdentityVerificationForm() {
             </div>
 
             <div>
-              <Label htmlFor="supervisor_email">Supervisor's Email Address <span className="text-red-500">*</span></Label>
+              <Label htmlFor="supervisor_email">
+                Supervisor's Email Address <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="supervisor_email"
                 name="supervisor_email"
                 type="email"
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
                 value={form.supervisor_email}
                 onChange={handleChange}
                 required
@@ -156,7 +179,9 @@ export function IdentityVerificationForm() {
             </div>
 
             <div>
-              <Label htmlFor="supervisor_affiliation">Supervisor's Affiliation <span className="text-red-500">*</span></Label>
+              <Label htmlFor="supervisor_affiliation">
+                Supervisor's Affiliation <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="supervisor_affiliation"
                 name="supervisor_affiliation"
@@ -167,14 +192,15 @@ export function IdentityVerificationForm() {
               {errors.supervisor_affiliation && <p className="text-red-500 text-sm mt-1">{errors.supervisor_affiliation}</p>}
             </div>
 
-            <div className="flex items-start space-x-2">
+            {/* gapではなくspace-xで安定、長文でも折り返し */}
+            <div className="flex items-start space-x-2 min-w-0">
               <Checkbox
                 id="honor_statement"
                 checked={form.honor_statement}
                 onCheckedChange={handleCheckboxChange}
                 required
               />
-              <Label htmlFor="honor_statement" className="text-sm leading-snug">
+              <Label htmlFor="honor_statement" className="text-sm leading-snug break-words">
                 I certify that all the information provided above is true and I pledge not to misuse research funding.
               </Label>
             </div>
@@ -184,6 +210,7 @@ export function IdentityVerificationForm() {
               type="submit"
               className="w-full bg-blue-600 text-white font-semibold hover:bg-blue-700"
               disabled={loading}
+              aria-busy={loading}
             >
               {loading ? "Submitting..." : "Submit Verification"}
             </Button>
@@ -193,5 +220,6 @@ export function IdentityVerificationForm() {
     </AppLayout>
   );
 }
+
 
 

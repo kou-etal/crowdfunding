@@ -8,7 +8,15 @@ import { Button } from '@/components/ui/button';
 import AppLayout from '../components/AppLayout';
 import { useNavigate } from 'react-router-dom';
 
-
+/** ← 追加：YYYY-MM-DD を“ローカル日付”で解釈（UTCズレ対策） */
+const parseDateLocal = (yyyy_mm_dd) => {
+  if (!yyyy_mm_dd) return null;
+  const [y, m, d] = yyyy_mm_dd.split('-').map((n) => parseInt(n, 10));
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d); // ローカルの 00:00
+};
+/** 同日比較用の 00:00 に丸める */
+const startOfDay = (dt) => new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
 
 export function CrowdfundingProjectForm() {
   const [title, setTitle] = useState('');
@@ -19,15 +27,22 @@ export function CrowdfundingProjectForm() {
   const navigate = useNavigate();
 
   const [titleError, setTitleError] = useState('');
-
-
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-
   const [descriptionError, setDescriptionError] = useState('');
   const [goalAmountError, setGoalAmountError] = useState('');
   const [deadlineError, setDeadlineError] = useState('');
   const [imageError, setImageError] = useState('');
+
+  const validateDeadline = (value) => {
+    const today = startOfDay(new Date());
+    const selected = parseDateLocal(value);          // ★ローカルで解釈
+    if (!selected) return 'Please select a future date.';
+    const max = new Date(today); max.setDate(today.getDate() + 28);
+    if (selected <= today) return 'Please select a future date.';
+    if (selected > max) return 'Deadline must be within 4 weeks from today.';
+    return '';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,26 +55,28 @@ export function CrowdfundingProjectForm() {
 
     let hasError = false;
 
+    if (title.trim().length === 0 || title.trim().length > 60) {
+      setTitleError('Title must be within 60 characters.');
+      hasError = true;
+    }
+
     if (description.length > 5000) {
       setDescriptionError('Description must be within 5000 characters.');
       hasError = true;
     }
 
-    if (parseInt(goalAmount) < 10) {
+    const goalNum = parseInt(goalAmount, 10);
+    if (Number.isNaN(goalNum) || goalNum < 10) {
       setGoalAmountError('Funding goal must be at least $10.');
+      hasError = true;
+    } else if (goalNum > 1_000_000) {
+      setGoalAmountError('Funding goal must not exceed $1,000,000.');
       hasError = true;
     }
 
-    const today = new Date();
-    const selectedDate = new Date(deadline);
-    const maxDeadline = new Date();
-    maxDeadline.setDate(today.getDate() + 28);
-
-    if (!deadline || selectedDate <= today) {
-      setDeadlineError('Please select a future date.');
-      hasError = true;
-    } else if (selectedDate > maxDeadline) {
-      setDeadlineError('Deadline must be within 4 weeks from today.');
+    const deadlineMsg = validateDeadline(deadline);  // ★共通関数で検証
+    if (deadlineMsg) {
+      setDeadlineError(deadlineMsg);
       hasError = true;
     }
 
@@ -85,26 +102,20 @@ export function CrowdfundingProjectForm() {
       }
 
       await axiosInstance.post('/api/crowdfunding-projects', {
-        title,
+        title: title.trim(),
         description,
-        goal_amount: goalAmount,
-        deadline,
+        goal_amount: goalNum,
+        deadline,          // 文字列のままでOK（サーバ側で扱う）
         image_path: imageUrl,
       });
 
-      setTitle('');
-      setDescription('');
-      setGoalAmount('');
-      setDeadline('');
-      setImageFile(null);
+      setTitle(''); setDescription(''); setGoalAmount(''); setDeadline(''); setImageFile(null);
       alert('Your project has been submitted successfully and is pending approval.\nPlease check the status from the "Project" menu.');
-navigate('/');
+      navigate('/');
     } catch (err) {
       console.error('Submission failed', err);
       alert('Submission failed.');
-      if (err.response?.data?.errors) {
-        setErrors(err.response.data.errors);
-      }
+      if (err.response?.data?.errors) setErrors(err.response.data.errors);
     } finally {
       setLoading(false);
     }
@@ -120,28 +131,25 @@ navigate('/');
         <Card className="shadow-lg border border-blue-100">
           <CardContent className="p-8 space-y-8">
             <form onSubmit={handleSubmit} className="space-y-6" aria-label="Crowdfunding project submission form">
-
               <div>
                 <label htmlFor="title" className="block text-sm font-medium mb-1">
                   Project Title <span className="text-red-500">*</span>
                 </label>
-               
                 <Input
-  id="title"
-  type="text"
-  value={title}
-  onChange={(e) => {
-    const value = e.target.value;
-    setTitle(value);
-    setTitleError(value.length > 60 ? 'Title must be within 60 characters.' : '');
-  }}
-  placeholder="Enter a short, clear project title"
-  required
-/>
- <p className="text-xs text-gray-500 mt-1">Max 60 characters.</p>
-{titleError && <p className="text-red-500 text-sm mt-1">{titleError}</p>}
-{errors.title?.[0] && <p className="text-red-500 text-sm mt-1">{errors.title[0]}</p>}
-
+                  id="title"
+                  type="text"
+                  value={title}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setTitle(value);
+                    setTitleError(value.trim().length > 60 ? 'Title must be within 60 characters.' : '');
+                  }}
+                  placeholder="Enter a short, clear project title"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">Max 60 characters.</p>
+                {titleError && <p className="text-red-500 text-sm mt-1">{titleError}</p>}
+                {errors.title?.[0] && <p className="text-red-500 text-sm mt-1">{errors.title[0]}</p>}
               </div>
 
               <div>
@@ -160,9 +168,7 @@ navigate('/');
                   required
                   className={`h-60 resize-y ${descriptionError ? 'border-red-500' : ''}`}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Max 5000 characters.
-                </p>
+                <p className="text-xs text-gray-500 mt-1">Max 5000 characters.</p>
                 {descriptionError && <p className="text-red-500 text-sm mt-1">{descriptionError}</p>}
                 {errors.description?.[0] && <p className="text-red-500 text-sm mt-1">{errors.description[0]}</p>}
               </div>
@@ -172,30 +178,31 @@ navigate('/');
                   Funding Goal (USD) <span className="text-red-500">*</span>
                 </label>
                 <Input
-  id="goalAmount"
-  type="number"
-  value={goalAmount}
-  onChange={(e) => {
-    const value = e.target.value;
-    setGoalAmount(value);
-
-    if (parseInt(value) < 10) {
-      setGoalAmountError('Funding goal must be at least $10.');
-    } else if (parseInt(value) > 1000000) {
-      setGoalAmountError('Funding goal must not exceed $1,000,000.');
-    } else {
-      setGoalAmountError('');
-    }
-  }}
-  placeholder="Enter your target funding amount in USD"
-  required
-/>
-<p className="text-xs text-gray-500 mt-1">
-                  10 to 1000000 dollers.
-                </p>
-{goalAmountError && <p className="text-red-500 text-sm mt-1">{goalAmountError}</p>}
-{errors.goal_amount?.[0] && <p className="text-red-500 text-sm mt-1">{errors.goal_amount[0]}</p>}
-
+                  id="goalAmount"
+                  type="number"
+                  inputMode="numeric"         // ★モバイルでの入力性UP
+                  min={10}
+                  max={1000000}
+                  step={1}
+                  value={goalAmount}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setGoalAmount(value);
+                    const num = parseInt(value, 10);
+                    if (Number.isNaN(num) || num < 10) {
+                      setGoalAmountError('Funding goal must be at least $10.');
+                    } else if (num > 1_000_000) {
+                      setGoalAmountError('Funding goal must not exceed $1,000,000.');
+                    } else {
+                      setGoalAmountError('');
+                    }
+                  }}
+                  placeholder="Enter your target funding amount in USD"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">10 to 1,000,000 dollars.</p>
+                {goalAmountError && <p className="text-red-500 text-sm mt-1">{goalAmountError}</p>}
+                {errors.goal_amount?.[0] && <p className="text-red-500 text-sm mt-1">{errors.goal_amount[0]}</p>}
               </div>
 
               <div>
@@ -209,17 +216,7 @@ navigate('/');
                   onChange={(e) => {
                     const value = e.target.value;
                     setDeadline(value);
-                    const selectedDate = new Date(value);
-                    const today = new Date();
-                    const maxDeadline = new Date();
-                    maxDeadline.setDate(today.getDate() + 28);
-                    if (!value || selectedDate <= today) {
-                      setDeadlineError('Please select a future date.');
-                    } else if (selectedDate > maxDeadline) {
-                      setDeadlineError('Deadline must be within 4 weeks from today.');
-                    } else {
-                      setDeadlineError('');
-                    }
+                    setDeadlineError(validateDeadline(value)); // ★ローカル日付で検証
                   }}
                   required
                 />
@@ -239,8 +236,9 @@ navigate('/');
                   type="file"
                   accept="image/*"
                   onChange={(e) => {
-                    setImageFile(e.target.files?.[0] || null);
-                    setImageError(e.target.files?.[0] ? '' : 'Project image is required.');
+                    const f = e.target.files?.[0] || null;
+                    setImageFile(f);
+                    setImageError(f ? '' : 'Project image is required.');
                   }}
                   required
                 />

@@ -1,111 +1,107 @@
-// src/pages/AdminProjectReview.jsx
 import { useEffect, useState } from "react";
 import { axiosInstance } from "../api/axiosInstance";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import AppLayout from "../components/AppLayout";
 
-export function AdminProjectReview() {
-  const [projects, setProjects] = useState([]);
-  const [rejectReasons, setRejectReasons] = useState({});
+const toNum = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+const jpy = (v) => `¥${toNum(v).toLocaleString("ja-JP")}`;
 
-  const fetchProjects = async () => {
+export function AdminPayoutRecords() {
+  const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [processingId, setProcessingId] = useState(null); // ★ 追加：行ごとの処理中フラグ
+
+  const fetchRecords = async () => {
     try {
-      const res = await axiosInstance.get("/api/admin/pending-projects");
-      setProjects(res.data);
+      setLoading(true);
+      setLoadError("");
+      const res = await axiosInstance.get("/api/admin/payout-records");
+      setRecords(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.error("Failed to fetch", err);
+      console.error("Failed to fetch records", err);
+      setLoadError("Failed to fetch payout records.");
+      setRecords([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMarkAsPaid = async (id) => {
+    if (processingId) return;                      // ★ 二重送信ブロック
+    if (!window.confirm("Mark this record as paid?")) return; // ★ 確認
+    try {
+      setProcessingId(id);
+      await axiosInstance.post(`/api/admin/payout-records/${id}/mark-paid`);
+      await fetchRecords();
+    } catch (err) {
+      console.error("Failed to update", err);
+      alert("Failed to mark as paid");
+    } finally {
+      setProcessingId(null);
     }
   };
 
   useEffect(() => {
-    fetchProjects();
+    fetchRecords();
   }, []);
-
-  const handleApprove = async (id) => {
-    try {
-      await axiosInstance.post(`/api/crowdfunding-projects/${id}/approve`);
-      alert("Project approved");
-      fetchProjects();
-    } catch (err) {
-      console.error("Approval error", err);
-    }
-  };
-
-  const handleReject = async (id) => {
-    try {
-      await axiosInstance.post(`/api/crowdfunding-projects/${id}/reject`, {
-        rejected_reason: rejectReasons[id] || "",
-      });
-      alert("Project rejected");
-      fetchProjects();
-    } catch (err) {
-      console.error("Rejection error", err);
-    }
-  };
-
-  const handleReasonChange = (id, value) => {
-    setRejectReasons((prev) => ({ ...prev, [id]: value }));
-  };
-
-  // 期限の表示を整える
-  const fmtDate = (iso) => {
-    if (!iso) return "-";
-    const d = new Date(iso);
-    if (isNaN(d)) return iso; // 変換できなければ原文
-    return d.toLocaleDateString("ja-JP", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-  };
 
   return (
     <AppLayout>
-      <div className="max-w-5xl mx-auto mt-20 space-y-6">
-        {/* 見出しを中央寄せ */}
-        <h1 className="text-4xl font-extrabold text-blue-900 text-center">Submitted Projects</h1>
+      <div className="w-full max-w-5xl mx-auto mt-20 space-y-6 px-4">
+        <h1 className="text-3xl font-extrabold text-blue-900 text-center">Payout Records</h1>
 
-        {/* 1段 = 1カード */}
-        <div className="grid grid-cols-1 gap-4">
-          {projects.length === 0 ? (
-            <p className="text-center text-gray-500">No projects are currently pending review.</p>
-          ) : (
-            projects.map((project) => (
-              <Card key={project.id}>
-                <CardContent className="p-6 space-y-3">
-                  <p className="w-full break-words">
-                    <strong>Title:</strong> {project.title}
-                  </p>
-                  <p className="w-full break-words">
-                    <strong>Description:</strong> {project.description}
-                  </p>
-                  <p>
-                    <strong>Target Amount:</strong> ${Number(project.goal_amount ?? 0).toLocaleString()}
-                  </p>
-                  <p>
-                    <strong>Deadline:</strong> {fmtDate(project.deadline)}
-                  </p>
+        {loading ? (
+          <p className="text-center text-gray-500">Loading...</p>
+        ) : loadError ? (
+          <p className="text-center text-red-600">{loadError}</p>
+        ) : records.length === 0 ? (
+          <p className="text-center text-gray-500">No payout records available.</p>
+        ) : (
+          records.map((record) => {
+            const goal = toNum(record?.project?.goal_amount);
+            const total = toNum(record?.total_amount);
+            const fee = toNum(record?.platform_fee);
+            const title = record?.project?.title ?? "-";
+            const researcher = record?.user_full_name ?? "-";
+            const email = record?.user_email ?? "-";
 
-                  <div className="flex flex-wrap items-center gap-2 mt-4">
-                    <Button onClick={() => handleApprove(project.id)}>Approve</Button>
-                    <Input
-                      placeholder="Rejection reason (optional)"
-                      value={rejectReasons[project.id] || ""}
-                      onChange={(e) => handleReasonChange(project.id, e.target.value)}
-                      className="w-64"
-                    />
-                    <Button variant="destructive" onClick={() => handleReject(project.id)}>
-                      Reject
+            const isRowProcessing = processingId === record.id; // ★
+
+            return (
+              <Card key={record.id} className="bg-white shadow-sm">
+                <CardContent className="p-6 space-y-3 min-w-0">
+                  <p><strong>Project ID:</strong> {record.project_id}</p>
+                  <p className="break-words"><strong>Project Title:</strong> {title}</p>
+                  <p className="break-words"><strong>Researcher:</strong> {researcher} ({email})</p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <p><strong>Goal Amount:</strong> {jpy(goal)}</p>
+                    <p><strong>Total Support Amount:</strong> {jpy(total)}</p>
+                    <p><strong>Platform Fee:</strong> {jpy(fee)}</p>
+                  </div>
+
+                  <div className="pt-2 flex justify-end">
+                    <Button
+                      variant={record.is_paid ? "secondary" : "default"}
+                      disabled={record.is_paid || isRowProcessing}
+                      aria-busy={isRowProcessing}
+                      onClick={() => handleMarkAsPaid(record.id)}
+                    >
+                      {record.is_paid ? "Paid" : isRowProcessing ? "Marking..." : "Mark as Paid"}
                     </Button>
                   </div>
                 </CardContent>
               </Card>
-            ))
-          )}
-        </div>
+            );
+          })
+        )}
       </div>
     </AppLayout>
   );
 }
+
