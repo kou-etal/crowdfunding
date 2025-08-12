@@ -44,30 +44,23 @@ export function CrowdfundingProjectList() {
     fetchProjects();
   }, []);
 
-  // アクティブ判定を頑強に
   const isActive = (p) => {
-    // 期限
     const deadlineOk = !p.deadline || !isPastDay(p.deadline);
-
-    // ゴール/合計
     const goal = toInt(p.goal_amount, Infinity);
     const total = toInt(
       p.current_amount ??
-      p.currentAmount ??
-      p.total_amount ??
-      p.supports_sum_amount ??
-      0,
+        p.currentAmount ??
+        p.total_amount ??
+        p.supports_sum_amount ??
+        0,
       0
     );
 
-    // %での保険
     const percent = parsePercent(p.progress_percent);
     const reachedByPercent = percent !== null && percent >= 100;
 
-    // フラグでの保険
     const reachedByFlag = Boolean(p.is_goal_reached);
     const expiredByFlag = Boolean(p.deadline_passed);
-
     const reachedByTotal = Number.isFinite(goal) && goal > 0 && total >= goal;
 
     const expired = expiredByFlag || !deadlineOk;
@@ -77,7 +70,7 @@ export function CrowdfundingProjectList() {
   };
 
   const visibleProjects = projects
-    .filter((p) => p.is_approved) // 公開済のみ
+    .filter((p) => p.is_approved)
     .filter(isActive);
 
   return (
@@ -85,31 +78,32 @@ export function CrowdfundingProjectList() {
       <HeroSection />
       <MissionSection />
 
-      <h1
-        className="
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 className="
           text-4xl md:text-5xl font-serif font-extrabold 
           text-center text-cf-science-blue 
           tracking-wide leading-tight pt-12 pb-6
-        "
-      >
-        Support the Researchers of Tomorrow!
-      </h1>
-      <div className="w-24 h-1 bg-cf-science-blue mx-auto rounded-full mb-8"></div>
+        ">
+          Support the Researchers of Tomorrow!
+        </h1>
+        <div className="w-24 h-1 bg-cf-science-blue mx-auto rounded-full mb-8" />
 
-      <section id="explore" className="scroll-mt-24" />
+        {/* SamsungでのscrollIntoView安定化 */}
+        <div id="explore" className="h-0 scroll-mt-24" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 px-6 pb-20">
-        {loading ? (
-          <p className="col-span-full text-center text-gray-500">Loading projects...</p>
-        ) : visibleProjects.length === 0 ? (
-          <p className="col-span-full text-center text-gray-500">
-            No projects available at the moment.
-          </p>
-        ) : (
-          visibleProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 pb-20">
+          {loading ? (
+            <p className="col-span-full text-center text-gray-500">Loading projects...</p>
+          ) : visibleProjects.length === 0 ? (
+            <p className="col-span-full text-center text-gray-500">
+              No projects available at the moment.
+            </p>
+          ) : (
+            visibleProjects.map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))
+          )}
+        </div>
       </div>
     </AppLayout>
   );

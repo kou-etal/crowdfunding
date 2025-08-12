@@ -1,8 +1,17 @@
+/* ===========================
+   index.css (safe + Samsung-ready)
+   =========================== */
+
+/* Tailwind / plugins */
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Dark variant helper (そのまま) */
 @custom-variant dark (&:is(.dark *));
 
+/* ---------------------------
+   Theme tokens (あなたの定義を維持)
+--------------------------- */
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -41,6 +50,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Light tokens */
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -74,8 +84,12 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Samsung / vh対策 */
+  --vh: 100dvh;
 }
 
+/* Dark tokens */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -110,11 +124,45 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* ---------------------------
+   Base layer (安全な全体適用)
+--------------------------- */
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
+  /* 文字の自動拡大を抑止（Samsung/Androidで有効） */
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+  /* 横スク起点の抑制（100vw起因などの保険） */
+  html, body { overflow-x: hidden; }
+
+  /* 既存の既定スタイル（あなたのまま） */
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground; }
+}
+
+/* ---------------------------
+   Utilities (vhの安定化)
+--------------------------- */
+@layer utilities {
+  /* 100vh問題の解決版。コンテナに付けて使う */
+  .min-dvh { min-height: 100dvh; }
+  .h-dvh   { height: 100dvh; }
+}
+@supports not (height: 100dvh) {
+  @layer utilities {
+    .min-dvh { min-height: 100vh; }
+    .h-dvh   { height: 100vh; }
   }
 }
+
+/* ---------------------------
+   Components (影響範囲を限定)
+--------------------------- */
+@layer components {
+  /* 流し込み画像やヒーロー用。必要な箇所だけに付ける */
+  .fluid-media { max-width: 100%; height: auto; display: block; }
+
+  /* （任意）アバターの“正方形+丸”を保証したい場合に使える */
+  .avatar-circle { @apply rounded-full overflow-hidden; }
+  .avatar-img    { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+/* ここでimgのグローバル指定は行わない → アバターが楕円化しない */

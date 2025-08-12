@@ -23,28 +23,23 @@ const isPastDay = (iso) => {
 };
 
 const ProjectCard = ({ project }) => {
-  // —— 基本値
   const goal = toInt(project.goal_amount, 0);
 
-  // 合計（APIのキー差を吸収）
   const totalRaw = toInt(
     project.current_amount ??
-    project.currentAmount ??
-    project.total_amount ??
-    project.supports_sum_amount ??
-    0,
+      project.currentAmount ??
+      project.total_amount ??
+      project.supports_sum_amount ??
+      0,
     0
   );
 
-  // 進捗%
   const percent = (() => {
     const p = parsePercent(project.progress_percent);
     if (p !== null) return Math.min(Math.round(p), 100);
-    // %が無い場合は合計から算出
     return goal > 0 ? Math.min(Math.round((totalRaw / goal) * 100), 100) : 0;
   })();
 
-  // 表示用合計（APIが金額を返さない環境でも見栄え維持）
   const totalForDisplay =
     totalRaw > 0
       ? totalRaw
@@ -52,12 +47,13 @@ const ProjectCard = ({ project }) => {
       ? Math.round((percent / 100) * goal)
       : 0;
 
-  // 非表示条件（期限切れ または 達成）
   const deadlineOk = !project.deadline || !isPastDay(project.deadline);
-  const reached = Boolean(project.is_goal_reached) || percent >= 100 || (goal > 0 && totalRaw >= goal);
+  const reached =
+    Boolean(project.is_goal_reached) ||
+    percent >= 100 ||
+    (goal > 0 && totalRaw >= goal);
   if (!deadlineOk || reached) return null;
 
-  // 残り日数
   const daysRemaining = (() => {
     if (!project.deadline) return null;
     const deadlineDate = new Date(project.deadline);
@@ -67,7 +63,7 @@ const ProjectCard = ({ project }) => {
   })();
 
   return (
-    <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden relative group">
+    <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden relative group w-full">
       {/* 画像もSPAリンクに */}
       <Link
         to={`/crowdfunding/${project.id}`}
@@ -77,9 +73,15 @@ const ProjectCard = ({ project }) => {
           src={project.imageUrl}
           alt={project.title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          loading="lazy"
+          decoding="async"
         />
         {daysRemaining && (
-          <div className={`absolute top-2 right-2 text-white text-sm px-3 py-1 rounded-full font-bold ${daysRemaining === "Ended" ? "bg-gray-600" : "bg-blue-900"}`}>
+          <div
+            className={`absolute top-2 right-2 text-white text-sm px-3 py-1 rounded-full font-bold ${
+              daysRemaining === "Ended" ? "bg-gray-600" : "bg-blue-900"
+            }`}
+          >
             <span>{daysRemaining} left</span>
           </div>
         )}
@@ -87,13 +89,17 @@ const ProjectCard = ({ project }) => {
 
       <div className="p-5">
         {/* Avatar and Owner name */}
-        <div className="flex items-center gap-3 mb-4 mt-2 ml-2 relative z-10">
+        <div className="flex items-center space-x-3 mb-4 mt-2 ml-2 relative z-10 min-w-0">
           <img
             src={project.ownerAvatarUrl}
             alt={project.ownerName}
-            className="w-16 h-16 rounded-full border-2 border-white shadow-md bg-gray-300 object-cover"
+            className="w-16 h-16 rounded-full border-2 border-white shadow-md bg-gray-300 object-cover flex-shrink-0"
+            loading="lazy"
+            decoding="async"
           />
-          <p className="text-lg font-bold text-blue-800">{project.ownerName || "Project Owner"}</p>
+          <p className="text-lg font-bold text-blue-800 truncate">
+            {project.ownerName || "Project Owner"}
+          </p>
         </div>
 
         {/* Title and description */}
@@ -131,4 +137,5 @@ const ProjectCard = ({ project }) => {
 };
 
 export default ProjectCard;
+
 

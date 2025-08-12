@@ -1,4 +1,3 @@
-// src/components/MobileMenu.jsx
 import { useEffect, useState } from "react";
 import { axiosInstance } from "../api/axiosInstance";
 import { Link } from "react-router-dom";
@@ -26,7 +25,6 @@ export default function MobileMenu() {
   const isVerified  = user?.is_verified == 1;
   const isAdmin     = user?.role === "admin" || user?.is_admin === 1;
 
-  // 投稿可否＆ツールチップ
   const isPostDisabled =
     !isLoggedIn ? true :
     isSupporter ? true :
@@ -48,11 +46,10 @@ export default function MobileMenu() {
     }
   };
 
-  // ボタン共通（省略なし＝フル表示、中央寄せ）
+  // モバイル：詰まり防止（省略なし・中央寄せ）
   const btnBase  = "w-full min-h-11 py-2 text-white text-sm";
-  const linkBase = "block w-full text-center whitespace-normal leading-snug"; // ← 省略しない
+  const linkBase = "block w-full text-center whitespace-normal leading-snug";
 
-  // メニュー配列
   const items = [];
 
   items.push({
@@ -187,7 +184,6 @@ export default function MobileMenu() {
     });
   }
 
-  // 段分け（4=1段, 5=3+2, 6=3+3, それ以上は3列ずつ）
   const makeRows = (arr) => {
     const n = arr.length;
     if (n <= 4) return [arr];
@@ -199,8 +195,6 @@ export default function MobileMenu() {
   };
 
   const rows = makeRows(items);
-
-  // 4個のときだけ、よりタイトに（文字は省略せず見せる）
   const fourTight = items.length === 4 ? "text-[13.5px] px-1" : "";
 
   return (
@@ -220,7 +214,7 @@ export default function MobileMenu() {
         )}
       </div>
 
-      {/* 段組みメニュー（4個は1段で均等幅。区切りはdivideで等間隔に見せる） */}
+      {/* 段組みメニュー（divideで等間隔） */}
       <nav className="bg-slate-800 text-white border-b shadow-sm">
         {rows.map((row, idx) => {
           const cols =
@@ -229,10 +223,7 @@ export default function MobileMenu() {
             "grid-cols-3";
 
           return (
-            <div
-              key={idx}
-              className={`grid ${cols} divide-x divide-white/10`} // ← 均等な区切り線
-            >
+            <div key={idx} className={`grid ${cols} divide-x divide-white/10`}>
               {row.map((it) => (
                 <div key={it.key} className="flex items-stretch">
                   <div className={`w-full px-2 py-1 ${fourTight}`}>
@@ -247,5 +238,6 @@ export default function MobileMenu() {
     </>
   );
 }
+
 
 

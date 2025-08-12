@@ -16,7 +16,7 @@ export function CrowdfundingProjectForm() {
   const [goalAmount, setGoalAmount] = useState('');
   const [deadline, setDeadline] = useState('');
   const [imageFile, setImageFile] = useState(null);
-  const navigate = useNavigate(); // ← useStateの下あたりに追加
+  const navigate = useNavigate();
 
   const [titleError, setTitleError] = useState('');
 
@@ -133,7 +133,7 @@ navigate('/');
   onChange={(e) => {
     const value = e.target.value;
     setTitle(value);
-    setTitleError(value.length > 100 ? 'Title must be within 60 characters.' : '');
+    setTitleError(value.length > 60 ? 'Title must be within 60 characters.' : '');
   }}
   placeholder="Enter a short, clear project title"
   required
