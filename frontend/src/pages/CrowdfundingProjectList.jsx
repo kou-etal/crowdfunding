@@ -4,6 +4,7 @@ import AppLayout from "../components/AppLayout";
 import ProjectCard from "../components/ProjectCard";
 import { HeroSection } from "../components/HeroSection";
 import { MissionSection } from "../components/MissionSection";
+import HowItWorksSection from "@/components/HowItWorksSection";
 
 const toInt = (v, d = 0) => {
   const n = Number(v);
@@ -76,7 +77,8 @@ export function CrowdfundingProjectList() {
   return (
     <AppLayout>
       <HeroSection />
-      <MissionSection />
+      <HowItWorksSection/>
+    
 
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="
@@ -105,6 +107,7 @@ export function CrowdfundingProjectList() {
           )}
         </div>
       </div>
+        <MissionSection />
     </AppLayout>
   );
 }
