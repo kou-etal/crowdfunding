@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { axiosInstance } from "../api/axiosInstance";
 import AppLayout from "../components/AppLayout";
 import ProjectCard from "../components/ProjectCard";
 import { HeroSection } from "../components/HeroSection";
 import { MissionSection } from "../components/MissionSection";
+import HowItWorksSection from "@/components/HowItWorksSection";
 
 const toInt = (v, d = 0) => {
   const n = Number(v);
@@ -25,6 +27,76 @@ const isPastDay = (iso) => {
   const day = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   return day(d) < day(today);
 };
+
+/* -------- PickUp（枠なし・静かなボタン／ロジック不変） -------- */
+function PickUpProjects({ projects }) {
+  if (!projects?.length) return null;
+
+  const getImage = (p) =>
+    p.image_url ||
+    p.image_path ||
+    p.thumbnail ||
+    "https://images.unsplash.com/photo-1529101091764-c3526daf38fe?q=80&w=1600&auto=format&fit=crop";
+
+  return (
+    <section className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 pt-8 pb-8">
+      <div className="flex items-end justify-between px-1 pb-3">
+        <h2 className="text-[#111418] text-2xl md:text-3xl font-extrabold tracking-tight">
+          Pick Up Projects
+        </h2>
+        <button
+          type="button"
+          onClick={() => {
+            const el = document.getElementById("explore");
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+          className="text-sm font-semibold text-blue-700 hover:text-blue-900"
+        >
+          Explore all →
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1">
+        {projects.map((p) => (
+          <div key={p.id} className="py-6 border-b border-gray-200 last:border-b-0">
+            <div className="flex items-stretch justify-between gap-6">
+              {/* 左：テキスト */}
+              <div className="flex flex-[2_2_0px] flex-col justify-between min-w-0">
+                <div className="flex flex-col gap-3">
+                  <p className="text-[#111418] text-base md:text-lg font-bold leading-tight line-clamp-2">
+                    {p.title}
+                  </p>
+                  <p className="text-[#4b5563] text-sm leading-relaxed line-clamp-3">
+                    {p.description || p.short_description || "—"}
+                  </p>
+                </div>
+
+                <Link
+                  to={`/crowdfunding/${p.id}`}
+                  className="inline-flex items-center justify-center h-9 px-4 rounded-lg bg-gray-200 text-gray-900 text-sm font-medium w-fit hover:bg-gray-300 transition-colors mt-4"
+                >
+                  View Project
+                  <svg className="ml-1 size-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M12.293 3.293a1 1 0 011.414 0l4.999 5a1 1 0 010 1.414l-5 5a1 1 0 11-1.414-1.414L15.586 11H3a1 1 0 110-2h12.586l-3.293-3.293a1 1 0 010-1.414z" />
+                  </svg>
+                </Link>
+              </div>
+
+              {/* 右：画像 */}
+              <Link to={`/projects/${p.id}`} className="relative w-full flex-1" aria-label={p.title}>
+                <div
+                  className="aspect-video rounded-xl bg-center bg-no-repeat bg-cover"
+                  style={{ backgroundImage: `url("${getImage(p)}")` }}
+                />
+              </Link>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+/* -------------------------------------------------------------- */
 
 export function CrowdfundingProjectList() {
   const [projects, setProjects] = useState([]);
@@ -55,10 +127,8 @@ export function CrowdfundingProjectList() {
         0,
       0
     );
-
     const percent = parsePercent(p.progress_percent);
     const reachedByPercent = percent !== null && percent >= 100;
-
     const reachedByFlag = Boolean(p.is_goal_reached);
     const expiredByFlag = Boolean(p.deadline_passed);
     const reachedByTotal = Number.isFinite(goal) && goal > 0 && total >= goal;
@@ -69,43 +139,51 @@ export function CrowdfundingProjectList() {
     return !expired && !reached;
   };
 
-  const visibleProjects = projects
-    .filter((p) => p.is_approved)
-    .filter(isActive);
+  const visibleProjects = projects.filter((p) => p.is_approved).filter(isActive);
+
+  // PickUp: ランダムで最大5件
+  const pickUp = useMemo(() => {
+    if (!visibleProjects.length) return [];
+    const arr = [...visibleProjects];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr.slice(0, 5);
+  }, [visibleProjects]);
 
   return (
     <AppLayout>
+      {/* AppLayout側でヘッダー分のptと少しの余白を入れているので、このままでOK */}
       <HeroSection />
+
+      <HowItWorksSection/>
+
+      {!loading && pickUp.length > 0 && <PickUpProjects projects={pickUp} />}
+
       <MissionSection />
 
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="
-          text-4xl md:text-5xl font-serif font-extrabold 
-          text-center text-cf-science-blue 
-          tracking-wide leading-tight pt-12 pb-6
-        ">
+      {/* 一覧（広めのコンテナ） */}
+      <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10">
+        <h1 className="text-4xl md:text-5xl font-serif font-extrabold text-center text-cf-science-blue tracking-wide leading-tight pt-12 pb-6">
           Support the Researchers of Tomorrow!
         </h1>
         <div className="w-24 h-1 bg-cf-science-blue mx-auto rounded-full mb-8" />
 
-        {/* SamsungでのscrollIntoView安定化 */}
         <div id="explore" className="h-0 scroll-mt-24" />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 pb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 lg:gap-10 pb-20">
           {loading ? (
             <p className="col-span-full text-center text-gray-500">Loading projects...</p>
           ) : visibleProjects.length === 0 ? (
-            <p className="col-span-full text-center text-gray-500">
-              No projects available at the moment.
-            </p>
+            <p className="col-span-full text-center text-gray-500">No projects available at the moment.</p>
           ) : (
-            visibleProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))
+            visibleProjects.map((project) => <ProjectCard key={project.id} project={project} />)
           )}
         </div>
       </div>
     </AppLayout>
   );
 }
+
 

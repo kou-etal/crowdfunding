@@ -18,7 +18,8 @@ const isPastDay = (iso) => {
   if (!iso) return false;
   const d = new Date(iso);
   const today = new Date();
-  const day = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const day = (x) =>
+    new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   return day(d) < day(today);
 };
 
@@ -63,11 +64,11 @@ const ProjectCard = ({ project }) => {
   })();
 
   return (
-    <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden relative group w-full">
-      {/* 画像もSPAリンクに */}
+    <div className="flex flex-col h-full bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group w-full">
+      {/* 画像：固定高を少し低く */}
       <Link
         to={`/crowdfunding/${project.id}`}
-        className="relative w-full h-48 overflow-hidden bg-gray-200 block"
+        className="relative w-full h-40 md:h-48 overflow-hidden bg-gray-200 block"
       >
         <img
           src={project.imageUrl}
@@ -78,64 +79,73 @@ const ProjectCard = ({ project }) => {
         />
         {daysRemaining && (
           <div
-            className={`absolute top-2 right-2 text-white text-sm px-3 py-1 rounded-full font-bold ${
+            className={`absolute top-2 right-2 text-white text-xs px-2.5 py-1 rounded-full font-semibold ${
               daysRemaining === "Ended" ? "bg-gray-600" : "bg-blue-900"
             }`}
           >
-            <span>{daysRemaining} left</span>
+            {daysRemaining} left
           </div>
         )}
       </Link>
 
-      <div className="p-5">
-        {/* Avatar and Owner name */}
-        <div className="flex items-center space-x-3 mb-4 mt-2 ml-2 relative z-10 min-w-0">
+      {/* 本文 */}
+      <div className="flex flex-col p-4 min-w-0 flex-1">
+        {/* オーナー */}
+        <div className="flex items-center space-x-2 mb-2 min-w-0">
           <img
             src={project.ownerAvatarUrl}
             alt={project.ownerName}
-            className="w-16 h-16 rounded-full border-2 border-white shadow-md bg-gray-300 object-cover flex-shrink-0"
+            className="w-10 h-10 rounded-full border border-white shadow bg-gray-300 object-cover flex-shrink-0"
             loading="lazy"
             decoding="async"
           />
-          <p className="text-lg font-bold text-blue-800 truncate">
+          <p className="text-sm md:text-base font-bold text-blue-800 truncate">
             {project.ownerName || "Project Owner"}
           </p>
         </div>
 
-        {/* Title and description */}
-        <h3 className="text-2xl font-bold text-gray-900 mb-2 mt-2 leading-tight">
+        {/* タイトル */}
+        <h3 className="text-lg md:text-xl font-bold text-gray-900 leading-snug line-clamp-2 min-h-[2.25rem]">
           {project.title}
         </h3>
-        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+
+        {/* 説明 */}
+        <p className="text-gray-600 text-sm mt-1 mb-3 line-clamp-2 min-h-[2.25rem]">
           {project.description}
         </p>
 
-        {/* Progress and amounts */}
-        <div className="mb-4">
-          <div className="flex justify-between items-baseline mb-1 text-sm font-medium">
-            <span className="text-blue-700 font-bold">
+        {/* 金額＆バー */}
+        <div className="mt-auto">
+          <div className="flex justify-between items-baseline mb-1 text-xs font-medium">
+            <span className="text-blue-700 font-semibold">
               Goal: {goal ? `$${goal.toLocaleString()}` : "N/A"}
             </span>
-            <span className="text-blue-900 text-xl font-bold">
+            <span className="text-blue-900 text-base md:text-lg font-bold">
               {`$${totalForDisplay.toLocaleString()}`}
             </span>
           </div>
-          <Progress value={percent} className="w-full h-2 bg-blue-200 [&>*]:bg-blue-600" />
-          <p className="text-right text-xs text-gray-500 mt-1">Progress: {percent}%</p>
-        </div>
+          <Progress
+            value={percent}
+            className="w-full h-2 bg-blue-200 [&>*]:bg-blue-600"
+          />
+          <p className="text-right text-xs text-gray-500 mt-1">
+            {percent}% funded
+          </p>
 
-        {/* View Details */}
-        <Link
-          to={`/crowdfunding/${project.id}`}
-          className="block w-full text-center bg-blue-600 text-white text-lg font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300"
-        >
-          View Project
-        </Link>
+          {/* ボタン */}
+          <Link
+            to={`/crowdfunding/${project.id}`}
+            className="mt-3 block w-full text-center bg-blue-500 text-white text-sm md:text-base font-semibold py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            View Project
+          </Link>
+        </div>
       </div>
     </div>
   );
 };
 
 export default ProjectCard;
+
 
 

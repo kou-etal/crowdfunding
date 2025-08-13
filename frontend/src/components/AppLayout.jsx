@@ -10,10 +10,12 @@ import {
 import { Button } from "./ui/button";
 import { AdminLink } from "./AdminLink";
 import MobileMenu from "./MobileMenu";
+import Footer from "./Footer";
 
 export default function AppLayout({ children }) {
   const [user, setUser] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [scrolled, setScrolled] = useState(false); // ← 追加：スクロール検知
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -26,7 +28,15 @@ export default function AppLayout({ children }) {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   const isLoggedIn = !!user;
@@ -54,14 +64,27 @@ export default function AppLayout({ children }) {
   else isPostDisabled = false;
 
   return (
-    // vhズレ対策：min-dvh（index.cssに追加済みユーティリティ）
+    // 全体：固定ヘッダー分の上パディング（ヘッダーh-16/md:h-20）
     <div className="min-dvh flex flex-col">
-      {/* ▼ ナビゲーション */}
+      {/* ===== Header / Nav（固定・透過・背面ブラー） ===== */}
       {isMobile ? (
-        <MobileMenu user={user} />
+        // MobileMenuのレイアウトはそのまま。固定のため外側でposition固定のバーを用意
+        <div className="fixed inset-x-0 top-0 z-50 bg-white/75 supports-[backdrop-filter]:backdrop-blur-md border-b border-white/40">
+          <MobileMenu user={user} />
+        </div>
       ) : (
-        // w-full固定 / 高さはモバイル16, mdで20
-        <nav className="w-full h-16 md:h-20 bg-white text-blue-900 border-b border-blue-200 flex items-center justify-between px-4 sm:px-6 md:px-8 shadow-lg">
+        <nav
+          className={[
+            "fixed inset-x-0 top-0 z-50",
+            "h-16 md:h-20",
+            // 透過＋背面ブラー（スクロールで濃く＆影）
+            "bg-white/60 supports-[backdrop-filter]:backdrop-blur-md border-b border-white/40",
+            scrolled ? "bg-white/85 shadow-md" : "shadow-none",
+            "text-blue-900 flex items-center justify-between px-4 sm:px-6 md:px-8 transition-[background-color,box-shadow] duration-300"
+          ].join(" ")}
+          role="navigation"
+          aria-label="Global"
+        >
           {/* 左：ロゴ＋ロール */}
           <div className="flex flex-col items-start">
             <Link
@@ -77,7 +100,7 @@ export default function AppLayout({ children }) {
             )}
           </div>
 
-          {/* 右：ナビ（gap依存を避けspace-xで安定） */}
+          {/* 右：ナビ */}
           <div className="flex items-center space-x-4 md:space-x-8">
             <Button
               asChild
@@ -107,14 +130,14 @@ export default function AppLayout({ children }) {
                     Projects
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="bg-blue-100 text-blue-900 border border-blue-200 shadow-lg rounded-md overflow-hidden">
+                <DropdownMenuContent className="bg-white text-blue-900 border border-blue-200 shadow-lg rounded-md overflow-hidden">
                   <DropdownMenuItem asChild>
                     <Link
                       to={isPostDisabled ? "#" : "/post"}
                       className={`block px-4 py-2 text-sm md:text-base transition-colors duration-200 ${
                         isPostDisabled
                           ? "text-gray-400 cursor-not-allowed"
-                          : "hover:bg-blue-200 hover:text-blue-900"
+                          : "hover:bg-blue-50 hover:text-blue-900"
                       }`}
                       title={isPostDisabled ? postTooltip : ""}
                     >
@@ -127,7 +150,7 @@ export default function AppLayout({ children }) {
                       className={`block px-4 py-2 text-sm md:text-base transition-colors duration-200 ${
                         isPostDisabled
                           ? "text-gray-400 cursor-not-allowed"
-                          : "hover:bg-blue-200 hover:text-blue-900"
+                          : "hover:bg-blue-50 hover:text-blue-900"
                       }`}
                       title={isPostDisabled ? postTooltip : ""}
                     >
@@ -189,18 +212,20 @@ export default function AppLayout({ children }) {
         </nav>
       )}
 
-      {/* ▼ メイン */}
-      <main className="w-full">{children}</main>
+      {/* ===== Main =====
+          固定ヘッダーの下にコンテンツが潜らないように上パディング＋
+          ヘッダーとヒーローの間に“少し”の余白（mt-3 md:mt-4） */}
+      <main className="w-full pt-20 md:pt-24">
+        <div className="mt-3 md:mt-4" />
+        {children}
+      </main>
 
-      {/* ▼ フッター */}
-      <footer className="w-full border-t mt-8">
-        <div className="max-w-xl mx-auto text-center text-xs md:text-sm text-gray-500 py-4">
-          © {new Date().getFullYear()} FundMyThesis. All rights reserved.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
+
+
 
 
 
