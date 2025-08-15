@@ -6,6 +6,7 @@ import ProjectCard from "../components/ProjectCard";
 import { HeroSection } from "../components/HeroSection";
 import { MissionSection } from "../components/MissionSection";
 import HowItWorksSection from "@/components/HowItWorksSection";
+import { AchievedProjectsSection } from "../components/AchievedProjectsSection";
 
 const toInt = (v, d = 0) => {
   const n = Number(v);
@@ -28,9 +29,9 @@ const isPastDay = (iso) => {
   return day(d) < day(today);
 };
 
-/* -------- PickUp（枠なし・静かなボタン／ロジック不変） -------- */
 function PickUpProjects({ projects }) {
   if (!projects?.length) return null;
+  
 
   const getImage = (p) =>
     p.image_url ||
@@ -39,18 +40,25 @@ function PickUpProjects({ projects }) {
     "https://images.unsplash.com/photo-1529101091764-c3526daf38fe?q=80&w=1600&auto=format&fit=crop";
 
   return (
-    <section className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 pt-8 pb-8">
+    <section className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-16 md:py-24">
       <div className="flex items-end justify-between px-1 pb-3">
-        <h2 className="text-[#111418] text-2xl md:text-3xl font-extrabold tracking-tight">
-          Pick Up Projects
-        </h2>
+      <h2
+  className="relative inline-block text-[#111418] text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900
+             after:block after:h-[2px] after:w-full after:bg-blue-800 after:mt-1 after:rounded-full"
+             style={{ fontFamily: '"Quicksand", sans-serif' }}
+>
+  Pick Up Projects
+</h2>
+
+
+      
         <button
           type="button"
           onClick={() => {
             const el = document.getElementById("explore");
             if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
           }}
-          className="text-sm font-semibold text-blue-700 hover:text-blue-900"
+          className="text-xl font-semibold text-blue-700 hover:text-blue-400"
         >
           Explore all →
         </button>
@@ -83,12 +91,29 @@ function PickUpProjects({ projects }) {
               </div>
 
               {/* 右：画像 */}
-              <Link to={`/projects/${p.id}`} className="relative w-full flex-1" aria-label={p.title}>
-                <div
-                  className="aspect-video rounded-xl bg-center bg-no-repeat bg-cover"
-                  style={{ backgroundImage: `url("${getImage(p)}")` }}
-                />
-              </Link>
+              <Link
+  to={`/crowdfunding/${p.id}`}
+  className="group relative block w-full flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-xl"
+  aria-label={p.title}
+  title={p.title}
+>
+  <div className="relative overflow-hidden rounded-xl">
+    {/* 画像（背景div版→img版推奨） */}
+    <div
+      className="aspect-video bg-center bg-no-repeat bg-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+      style={{ backgroundImage: `url("${getImage(p)}")` }}
+      role="img"
+      aria-label={p.title}
+    />
+
+    {/* 黒幕（ホバー時にうっすら） */}
+    <div className="pointer-events-none absolute inset-0 rounded-xl bg-black/0 group-hover:bg-black/15 transition-colors duration-300" />
+
+    {/* ラベル（ホバー時にフェード＆スライドアップ） */}
+   
+  </div>
+</Link>
+
             </div>
           </div>
         ))}
@@ -96,7 +121,6 @@ function PickUpProjects({ projects }) {
     </section>
   );
 }
-/* -------------------------------------------------------------- */
 
 export function CrowdfundingProjectList() {
   const [projects, setProjects] = useState([]);
@@ -141,7 +165,18 @@ export function CrowdfundingProjectList() {
 
   const visibleProjects = projects.filter((p) => p.is_approved).filter(isActive);
 
-  // PickUp: ランダムで最大5件
+  // 達成済み（最近6件程度）
+  const achievedProjects = useMemo(() => {
+    const done = projects.filter((p) => p.is_approved && !isActive(p));
+    if (!done.length) return [];
+    // completed_at → updated_at → deadline → created_at の順で新しいもの
+    const key = (p) =>
+      new Date(p.completed_at || p.updated_at || p.deadline || p.created_at || 0).getTime();
+    const sorted = [...done].sort((a, b) => key(b) - key(a));
+    return sorted.slice(0, 6);
+  }, [projects]);
+
+  // ピックアップ（進行中）
   const pickUp = useMemo(() => {
     if (!visibleProjects.length) return [];
     const arr = [...visibleProjects];
@@ -154,17 +189,21 @@ export function CrowdfundingProjectList() {
 
   return (
     <AppLayout>
-      {/* AppLayout側でヘッダー分のptと少しの余白を入れているので、このままでOK */}
       <HeroSection />
+      <HowItWorksSection />
 
-      <HowItWorksSection/>
+      {/* ★ 達成済み：円環メリーゴーランド */}
+      {!loading && achievedProjects.length > 0 && (
+        <AchievedProjectsSection projects={achievedProjects} durationSec={6} />
+      )}
 
+      {/* 進行中ピックアップ */}
       {!loading && pickUp.length > 0 && <PickUpProjects projects={pickUp} />}
 
       <MissionSection />
 
-      {/* 一覧（広めのコンテナ） */}
-      <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10">
+      {/* 一覧 */}
+      <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 my-30">
         <h1 className="text-4xl md:text-5xl font-serif font-extrabold text-center text-cf-science-blue tracking-wide leading-tight pt-12 pb-6">
           Support the Researchers of Tomorrow!
         </h1>

@@ -144,7 +144,7 @@ public function index()
 }
 
 
-public function show($id)
+/*public function show($id)
 {
     $project = CrowdfundingProject::with([
         'user:id,name,full_name,email,profile_image,bio,degree,expertise,university,institute',
@@ -185,7 +185,59 @@ public function show($id)
         'deadline' => $project->deadline->toDateString(),
         'created_at' => $project->created_at->toDateTimeString(),
     ]);
+}*/public function show($id)
+{
+    $project = CrowdfundingProject::with([
+        'user:id,name,full_name,email,profile_image,bio,degree,expertise,university,institute',
+        'user.identityVerification:id,user_id,supervisor_name,supervisor_email,supervisor_affiliation,face_image_path',
+        'supports.user:id,name'
+    ])->findOrFail($id);
+
+    $identity = $project->user->identityVerification;
+
+    // 画像URLを決定（絶対URLで返す）
+    $imageUrl = $project->image_path;
+    if ($imageUrl && !preg_match('#^https?://#', $imageUrl)) {
+        // DBに相対パスだけが入っている場合の保険
+        $imageUrl = url($imageUrl); // 例: /storage/projects/... → https://example.com/storage/projects/...
+    }
+
+    return response()->json([
+        'id' => $project->id,
+        'title' => $project->title,
+        'description' => $project->description,
+        'goal_amount' => $project->goal_amount,
+        'current_amount' => $project->supports->sum('amount'),
+        'progress_percent' => min(100, round($project->supports->sum('amount') / $project->goal_amount * 100)),
+        'image_url' => $imageUrl,          // ← 追加（統一してこのキーを返す）
+        'image_path' => $project->image_path, // ← 互換のためそのままも返す（任意）
+
+        'user' => [
+            'name' => $project->user->name,
+            'full_name' => $project->user->full_name,
+            'email' => $project->user->email,
+            'bio' => $project->user->bio,
+            'degree' => $project->user->degree,
+            'expertise' => $project->user->expertise,
+            'university' => $project->user->university,
+            'institute' => $project->user->institute,
+            'profile_image' => optional($identity)->face_image_path ?? $project->user->profile_image,
+        ],
+        'supervisor_name' => optional($identity)->supervisor_name,
+        'supervisor_email' => optional($identity)->supervisor_email,
+        'supervisor_affiliation' => optional($identity)->supervisor_affiliation,
+        'supports' => $project->supports->map(function ($support) {
+            return [
+                'amount' => $support->amount,
+                'user' => $support->user,
+                'supported_at' => $support->created_at->toDateTimeString(),
+            ];
+        }),
+        'deadline' => $project->deadline->toDateString(),
+        'created_at' => $project->created_at->toDateTimeString(),
+    ]);
 }
+
 
 
 }
