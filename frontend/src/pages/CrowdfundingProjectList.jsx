@@ -204,7 +204,8 @@ export function CrowdfundingProjectList() {
 
       {/* 一覧 */}
       <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 my-30">
-        <h1 className="text-4xl md:text-5xl font-serif font-extrabold text-center text-cf-science-blue tracking-wide leading-tight pt-12 pb-6">
+        <h1 className="text-4xl md:text-5xl font-serif font-extrabold text-center text-cf-science-blue tracking-wide leading-tight pt-12 pb-6"
+         style={{ fontFamily: '"Quicksand", sans-serif' }}>
           Support the Researchers of Tomorrow!
         </h1>
         <div className="w-24 h-1 bg-cf-science-blue mx-auto rounded-full mb-8" />
