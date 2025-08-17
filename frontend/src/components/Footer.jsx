@@ -73,11 +73,11 @@ export default function Footer() {
             Guide &amp; Help
           </h3>
           <ul className="mt-4 space-y-3 text-sm">
-            <li><Link to="/about" className="hover:text-white text-gray-300">About</Link></li>
-            <li><Link to="/terms" className="hover:text-white text-gray-300">Terms of Service</Link></li>
-            <li><Link to="/privacy" className="hover:text-white text-gray-300">Privacy Policy</Link></li>
-            <li><Link to="/guidelines" className="hover:text-white text-gray-300">Guidelines</Link></li>
-            <li><Link to="/help" className="hover:text-white text-gray-300">Help</Link></li>
+            <li><Link to="/" className="hover:text-white text-gray-300">About</Link></li>
+            <li><Link to="/" className="hover:text-white text-gray-300">Terms of Service</Link></li>
+            <li><Link to="/" className="hover:text-white text-gray-300">Privacy Policy</Link></li>
+            <li><Link to="/" className="hover:text-white text-gray-300">Guidelines</Link></li>
+            <li><Link to="/" className="hover:text-white text-gray-300">Help</Link></li>
           </ul>
         </div>
 
