@@ -8,7 +8,7 @@ import { HeroSection } from "../components/HeroSection";
 import { MissionSection } from "../components/MissionSection";
 import HowItWorksSection from "@/components/HowItWorksSection";
 import { AchievedProjectsSection } from "../components/AchievedProjectsSection";
-import { AchievedProjectsSectionMobile } from "../components/AchievedProjectsSectionMobile"; // ★追加
+import { AchievedProjectsSectionMobile } from "../components/AchievedProjectsSectionMobile";
 
 const toInt = (v, d = 0) => {
   const n = Number(v);
@@ -27,12 +27,12 @@ const isPastDay = (iso) => {
   if (!iso) return false;
   const d = new Date(iso);
   const today = new Date();
-  const day = (x) =>
-    new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const day = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   return day(d) < day(today);
 };
 
 /* ---------- Pick Up（進行中から数件） ---------- */
+/* モバイルで画像＝本文の行の高さ、ボタンは2行目に分離 */
 function PickUpProjects({ projects }) {
   if (!projects?.length) return null;
 
@@ -66,46 +66,57 @@ function PickUpProjects({ projects }) {
       <div className="grid grid-cols-1">
         {projects.map((p) => (
           <div key={p.id} className="py-6 border-b border-gray-200 last:border-b-0">
-            <div className="flex items-stretch justify-between gap-6">
-              {/* 左：テキスト */}
-              <div className="flex flex-[2_2_0px] flex-col justify-between min-w-0">
-                <div className="flex flex-col gap-3">
-                  <p className="text-[#111418] text-base md:text-lg font-bold leading-tight line-clamp-2">
-                    {p.title}
-                  </p>
-                  <p className="text-[#4b5563] text-sm leading-relaxed line-clamp-3">
-                    {p.description || p.short_description || "—"}
-                  </p>
-                </div>
+            {/* 2列×2行（行1=本文+画像 / 行2=ボタン） md以上は1行に戻す */}
+            <div className="
+              grid items-start gap-4 md:gap-6
+              grid-cols-[1fr_120px] grid-rows-[auto_auto]
+              md:grid-cols-[2fr_1fr] md:grid-rows-1 md:items-stretch
+            ">
+              {/* 行1・列1：本文 */}
+              <div className="row-start-1 col-start-1 min-w-0">
+                <p className="text-[#111418] text-base md:text-lg font-bold leading-tight line-clamp-2">
+                  {p.title}
+                </p>
+                <p className="text-[#4b5563] text-sm leading-relaxed line-clamp-3 mt-2">
+                  {p.description || p.short_description || "—"}
+                </p>
+              </div>
 
+              {/* 行1・列2：画像（本文の行の高さに合わせる） */}
+              <Link
+                to={`/crowdfunding/${p.id}`}
+                className="
+                  row-start-1 col-start-2
+                  block w-full h-full min-h-[120px]
+                  md:row-auto md:min-h-0
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-xl overflow-hidden
+                "
+                aria-label={p.title}
+                title={p.title}
+              >
+                <div className="relative w-full h-full md:aspect-video md:h-auto">
+                  <img
+                    src={getImage(p)}
+                    alt={p.title}
+                    className="absolute inset-0 w-full h-full object-cover md:static transition-transform duration-500 ease-out hover:scale-[1.03]"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+              </Link>
+
+              {/* 行2・列1：ボタン（画像とは別行） */}
+              <div className="row-start-2 col-start-1">
                 <Link
                   to={`/crowdfunding/${p.id}`}
-                  className="inline-flex items-center justify-center h-9 px-4 rounded-lg bg-gray-200 text-gray-900 text-sm font-medium w-fit hover:bg-gray-300 transition-colors mt-4"
+                  className="inline-flex items-center justify-center h-9 px-4 rounded-lg bg-gray-200 text-gray-900 text-sm font-medium w-fit hover:bg-gray-300 transition-colors"
                 >
                   View Project
-                  <svg className="ml-1 size-4" viewBox="0 0 20 20" fill="currentColor">
+                  <svg className="ml-1 size-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                     <path d="M12.293 3.293a1 1 0 011.414 0l4.999 5a1 1 0 010 1.414l-5 5a1 1 0 11-1.414-1.414L15.586 11H3a1 1 0 110-2h12.586l-3.293-3.293a1 1 0 010-1.414z" />
                   </svg>
                 </Link>
               </div>
-
-              {/* 右：画像（背景divで安定描画） */}
-              <Link
-                to={`/crowdfunding/${p.id}`}
-                className="group relative block w-full flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-xl"
-                aria-label={p.title}
-                title={p.title}
-              >
-                <div className="relative overflow-hidden rounded-xl">
-                  <div
-                    className="aspect-video bg-center bg-no-repeat bg-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-                    style={{ backgroundImage: `url("${getImage(p)}")` }}
-                    role="img"
-                    aria-label={p.title}
-                  />
-                  <div className="pointer-events-none absolute inset-0 rounded-xl bg-black/0 group-hover:bg-black/15 transition-colors duration-300" />
-                </div>
-              </Link>
             </div>
           </div>
         ))}
@@ -114,7 +125,7 @@ function PickUpProjects({ projects }) {
   );
 }
 
-/* ---------- 親コンポーネント ---------- */
+/* ---------- 親コンポーネント（以下は変更なし） ---------- */
 export function CrowdfundingProjectList() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -158,7 +169,6 @@ export function CrowdfundingProjectList() {
 
   const visibleProjects = projects.filter((p) => p.is_approved).filter(isActive);
 
-  // 達成済み（最近6件）
   const achievedProjects = useMemo(() => {
     const done = projects.filter((p) => p.is_approved && !isActive(p));
     if (!done.length) return [];
@@ -168,7 +178,6 @@ export function CrowdfundingProjectList() {
     return sorted.slice(0, 6);
   }, [projects]);
 
-  // ピックアップ（進行中からランダム最大5）
   const pickUp = useMemo(() => {
     if (!visibleProjects.length) return [];
     const arr = [...visibleProjects];
@@ -184,26 +193,22 @@ export function CrowdfundingProjectList() {
       <HeroSection />
       <HowItWorksSection />
 
-      {/* ★ 達成済み：デスクトップ=円環、モバイル=1枚切替（CSSで出し分け） */}
       {!loading && achievedProjects.length > 0 && (
         <>
-          {/* モバイル版（～md） */}
           <div className="block md:hidden">
             <AchievedProjectsSectionMobile projects={achievedProjects} durationSec={6} />
           </div>
-          {/* デスクトップ版（md～） */}
           <div className="hidden md:block">
             <AchievedProjectsSection projects={achievedProjects} durationSec={6} />
           </div>
         </>
       )}
 
-      {/* 進行中ピックアップ */}
+      {/* ★修正済み Pick Up */}
       {!loading && pickUp.length > 0 && <PickUpProjects projects={pickUp} />}
 
       <MissionSection />
 
-      {/* 一覧 */}
       <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 my-30">
         <h1
           className="text-4xl md:text-5xl font-serif font-extrabold text-center text-cf-science-blue tracking-wide leading-tight pt-12 pb-6"
@@ -212,10 +217,7 @@ export function CrowdfundingProjectList() {
           Support the Researchers of Tomorrow!
         </h1>
         <div className="w-24 h-1 bg-cf-science-blue mx-auto rounded-full mb-8" />
-
-        {/* Samsung scrollIntoView 安定化用アンカー */}
         <div id="explore" className="h-0 scroll-mt-24" />
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 lg:gap-10 pb-20">
           {loading ? (
             <p className="col-span-full text-center text-gray-500">Loading projects...</p>
@@ -224,14 +226,13 @@ export function CrowdfundingProjectList() {
               No projects available at the moment.
             </p>
           ) : (
-            visibleProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))
+            visibleProjects.map((project) => <ProjectCard key={project.id} project={project} />)
           )}
         </div>
       </div>
     </AppLayout>
   );
 }
+
 
 

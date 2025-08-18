@@ -1,3 +1,4 @@
+// src/pages/ProjectDetail.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { axiosInstance } from "../api/axiosInstance";
@@ -50,7 +51,6 @@ export function ProjectDetail() {
     return { goal, raised, remaining, progress };
   }, [project]);
 
-  // 画像キーを広めに見る（show/index 両対応）
   const coverImage = useMemo(() => {
     const p = project || {};
     return (
@@ -64,7 +64,6 @@ export function ProjectDetail() {
     );
   }, [project]);
 
-  // 説明パラグラフ
   const paragraphs = useMemo(() => {
     const raw = project?.description ?? "";
     return raw
@@ -73,7 +72,10 @@ export function ProjectDetail() {
       .filter(Boolean);
   }, [project?.description]);
 
-  // 金額入力
+  const flowCount = Math.min(2, paragraphs.length); // 画像の横に流し込む段落数
+  const flowParas = paragraphs.slice(0, flowCount);
+  const restParas = paragraphs.slice(flowCount);
+
   const onChangeAmount = (e) => {
     let raw = e.target.value;
     raw = raw.replace(/，/g, ",").replace(/．/g, ".").replace(/,/g, "");
@@ -151,111 +153,25 @@ export function ProjectDetail() {
     }
   };
 
-  // === Loading Animation ===
   if (fetching || !project) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="relative flex flex-col items-center gap-5">
-          {/* 内周リング（逆回転） */}
-          <div className="relative w-28 h-28">
-            <svg
-              className="absolute inset-0 w-20 h-20 m-auto animate-spin-reverse"
-              viewBox="0 0 100 100"
-              aria-hidden="true"
-            >
-              <circle cx="50" cy="50" r="30" fill="none" stroke="rgba(59,130,246,0.15)" strokeWidth="5" />
-              <circle
-                cx="50" cy="50" r="30" fill="none" stroke="#60a5fa" strokeWidth="5"
-                strokeDasharray="160" strokeDashoffset="110" strokeLinecap="round"
-                className="drop-glow"
-              />
-            </svg>
-
-            {/* 中央パルス点 */}
-            <div className="absolute inset-0 m-auto size-3 rounded-full bg-cyan-300 animate-pulse-glow" />
-          </div>
-
-          {/* テキスト */}
-          <div
-            className="text-2xl font-extrabold tracking-widest text-transparent bg-clip-text
-                       bg-gradient-to-r from-cyan-300 via-blue-400 to-cyan-300 animate-gradient-text"
-            aria-live="polite"
-          >
-            LOADING
-          </div>
-        </div>
-
-        {/* アニメーション定義 */}
-        <style>{`
-          @keyframes spin-reverse { to { transform: rotate(-360deg); } }
-          .animate-spin-reverse { animation: spin-reverse 2s linear infinite; }
-
-          @keyframes gradient-text {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-          }
-          .animate-gradient-text {
-            background-size: 200% 200%;
-            animation: gradient-text 2.8s ease-in-out infinite;
-          }
-
-          @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 10px rgba(103,232,249,0.7), 0 0 20px rgba(59,130,246,0.5); }
-            50%       { box-shadow: 0 0 20px rgba(103,232,249,1),   0 0 40px rgba(59,130,246,0.8); }
-          }
-          .animate-pulse-glow { animation: pulse-glow 1.4s ease-in-out infinite; }
-
-          .drop-glow {
-            filter: drop-shadow(0 0 6px rgba(59,130,246,0.6)) drop-shadow(0 0 12px rgba(103,232,249,0.5));
-          }
-
-          @media (prefers-reduced-motion: reduce) {
-            .animate-spin-reverse,
-            .animate-gradient-text,
-            .animate-pulse-glow { animation: none !important; }
-          }
-        `}</style>
-      </div>
+      <div className="min-h-screen flex items-center justify-center">Loading...</div>
     );
   }
-  // === /Loading Animation ===
 
   return (
     <AppLayout>
       <div className="w-full max-w-7xl mx-auto mt-10 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* LEFT: 枠なし */}
+          {/* LEFT */}
           <div className="lg:col-span-8 min-w-0">
             <div className="space-y-6">
+              {/* タイトル */}
               <h1 className="text-3xl md:text-4xl font-bold text-blue-900 break-words">
                 {project.title}
               </h1>
 
-              {/* ==== カバー画像（高さを出し過ぎないアスペクト比コンテナ） ==== */}
-              {coverImage && (
-                <figure className="rounded-2xl overflow-hidden shadow-sm">
-                  <div className="
-                    relative
-                    aspect-[16/10]    /* mobile: 少し高め */
-                    sm:aspect-[16/9]  /* タブレット */
-                    md:aspect-[21/9]  /* デスクトップで薄く */
-                    lg:aspect-[24/9]  /* さらに薄く */
-                  ">
-                    <img
-                      src={coverImage}
-                      alt={project.title || "Project cover"}
-                      className="absolute inset-0 h-full w-full object-cover"
-                      loading="lazy"
-                      decoding="async"
-                      sizes="(max-width: 1024px) 100vw, 800px"
-                    />
-                  </div>
-                </figure>
-              )}
-              {/* ===================================================== */}
-
-              {/* メタ＋進捗 */}
+              {/* タイトル直下：メタ＋進捗 */}
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
                   {project.category && (
@@ -272,35 +188,81 @@ export function ProjectDetail() {
                   <span>
                     Raised: ${derived.raised.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                   </span>
+                  <span>
+                    Remaining: $
+                    {derived.remaining.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
                 </div>
-                <div>
-                  <Progress value={derived.progress} />
-                  <div className="mt-2 flex justify-between text-xs text-slate-600">
-                    <span>{derived.progress}% funded</span>
-                    <span>
-                      Remaining: $
-                      {derived.remaining.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </span>
-                  </div>
+                <Progress value={derived.progress} />
+                <div className="flex justify-between text-xs text-slate-600">
+                  <span>{derived.progress}% funded</span>
                 </div>
               </div>
 
-              {/* 説明（読みやすい幅） */}
-              <div className="max-w-[70ch] text-slate-800 leading-[1.85] tracking-[0.005em] space-y-4 break-words hyphens-auto">
-                {paragraphs.length
-                  ? paragraphs.map((t, i) => <p key={i}>{t}</p>)
-                  : <p>{project.description}</p>}
-              </div>
+              {/* 画像＋回り込み本文 */}
+              {coverImage ? (
+                <>
+                  <section className="relative">
+                    {/* 画像（デスクトップは左フロート） */}
+                    <figure
+                      className="
+                        md:float-left md:mr-6 md:mb-2
+                        w-full max-w-[20rem] mx-auto md:mx-0
+                      "
+                    >
+                      <div className="w-full aspect-square rounded-2xl overflow-hidden shadow-sm">
+                        <img
+                          src={coverImage}
+                          alt={project.title || "Project cover"}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </div>
+                    </figure>
+
+                    {/* 画像の“脇”に流す段落（最大2つ） */}
+                    {flowParas.map((t, i) => (
+                      <p
+                        key={i}
+                        className="text-slate-800 leading-[1.9] tracking-[0.005em] mb-4"
+                      >
+                        {t}
+                      </p>
+                    ))}
+
+                    {/* ここでフロート解除 → 以降は通常幅 */}
+                    <div className="clear-both" />
+                  </section>
+
+                  {/* 残りの本文（左カラムいっぱいに広がる） */}
+                  {restParas.length > 0 && (
+                    <div className="text-slate-800 leading-[1.9] tracking-[0.005em] space-y-4 break-words hyphens-auto">
+                      {restParas.map((t, i) => (
+                        <p key={i}>{t}</p>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                // 画像が無い場合は全段落を通常表示
+                <div className="text-slate-800 leading-[1.9] tracking-[0.005em] space-y-4 break-words hyphens-auto">
+                  {paragraphs.length ? (
+                    paragraphs.map((t, i) => <p key={i}>{t}</p>)
+                  ) : (
+                    <p>{project.description}</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* RIGHT: Sticky 支援＆プロフィール */}
+          {/* RIGHT（支援 & プロフィール） */}
           <aside className="lg:col-span-4 min-w-0">
             <div className="lg:sticky lg:top-24 space-y-4">
-              {/* 支援カード */}
               <Card className="bg-white/95 backdrop-blur p-6 rounded-2xl shadow-md">
                 <h2 className="text-lg font-semibold text-slate-900 mb-3">Support this project</h2>
                 <div className="text-sm text-slate-600 mb-3">
@@ -330,7 +292,6 @@ export function ProjectDetail() {
                 </div>
               </Card>
 
-              {/* プロフィールカード */}
               <Card className="bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-md">
                 <h3 className="text-base font-semibold text-slate-900 mb-4 text-center">Project Owner</h3>
                 <div className="flex flex-col items-center gap-2 mb-4">
@@ -351,8 +312,6 @@ export function ProjectDetail() {
 
                 <div className="space-y-2 text-sm text-gray-700">
                   <div><span className="font-medium">Full Name:</span> {project.user?.full_name || "N/A"}</div>
-
-                  {/* Bio 7行クランプ + トグル */}
                   <div>
                     <span className="font-medium">Bio:</span>{" "}
                     <span
@@ -360,12 +319,7 @@ export function ProjectDetail() {
                       style={
                         bioExpanded
                           ? undefined
-                          : {
-                              display: "-webkit-box",
-                              WebkitLineClamp: 7,
-                              WebkitBoxOrient: "vertical",
-                              overflow: "hidden",
-                            }
+                          : { display: "-webkit-box", WebkitLineClamp: 7, WebkitBoxOrient: "vertical", overflow: "hidden" }
                       }
                     >
                       {project.user?.bio || "N/A"}
@@ -380,7 +334,6 @@ export function ProjectDetail() {
                       </button>
                     )}
                   </div>
-
                   <div><span className="font-medium">Degree:</span> {project.user?.degree || "N/A"}</div>
                   <div><span className="font-medium">Expertise:</span> {project.user?.expertise || "N/A"}</div>
                   <div><span className="font-medium">University:</span> {project.user?.university || "N/A"}</div>
