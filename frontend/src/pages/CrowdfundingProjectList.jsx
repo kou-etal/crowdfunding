@@ -46,7 +46,7 @@ function PickUpProjects({ projects }) {
     <section className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-16 md:py-24">
       <div className="flex items-end justify-between px-1 pb-3">
         <h2
-          className="relative inline-block text-[#111418] text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900 after:block after:h-[2px] after:w-full after:bg-blue-800 after:mt-1 after:rounded-full"
+          className="relative inline-block text-[#111418] text-2xl md:text-3xl font-extrabold tracking-tight text-black after:block after:h-[2px] after:w-full after:bg-blue-800 after:mt-1 after:rounded-full"
           style={{ fontFamily: '"Quicksand", sans-serif' }}
         >
           Pick Up Projects

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { axiosInstance } from "../api/axiosInstance";
+import ScrollManager from "@/components/ScrollManager";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -66,6 +67,7 @@ export default function AppLayout({ children }) {
   return (
     // 全体：固定ヘッダー分の上パディング（ヘッダーh-16/md:h-20）
     <div className="min-dvh flex flex-col">
+        <ScrollManager />
       {/* ===== Header / Nav（固定・透過・背面ブラー） ===== */}
       {isMobile ? (
         // MobileMenuのレイアウトはそのまま。固定のため外側でposition固定のバーを用意
