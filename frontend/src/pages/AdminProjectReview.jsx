@@ -1,4 +1,4 @@
-// src/pages/AdminProjectReview.jsx
+
 import { useEffect, useState } from "react";
 import { axiosInstance } from "../api/axiosInstance";
 import { Card, CardContent } from "@/components/ui/card";

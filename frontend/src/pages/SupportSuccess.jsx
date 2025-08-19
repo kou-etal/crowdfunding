@@ -6,11 +6,11 @@ export function SupportSuccess() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 使わないなら session_id は参照だけ（必要ならここで検証リクエストに使う）
+  
   const params = new URLSearchParams(location.search);
   const sessionId = params.get("session_id");
 
-  // リンク表示にも使うので状態に保持
+  
   const [projectId, setProjectId] = useState(null);
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export function SupportSuccess() {
 
   return (
     <AppLayout>
-      {/* 60vh 相当 → 60dvh に変更して Galaxy のアドレスバー高さ変動でも安定 */}
+      
       <div className="flex flex-col items-center justify-center min-h-[60dvh] px-6 text-center space-y-6">
         <div className="text-green-600 text-6xl">🎉</div>
 
@@ -46,7 +46,7 @@ export function SupportSuccess() {
           ※ The total raised amount may take a few moments to update. Please refresh the page if it does not appear immediately.
         </p>
 
-        {/* 今すぐ戻る導線（projectIdが無ければTopへ） */}
+      
         <Link
           to={projectId ? `/crowdfunding/${projectId}` : "/"}
           className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg transition-colors"

@@ -49,7 +49,7 @@ export function ProjectDetail() {
     return { goal, raised, remaining, progress };
   }, [project]);
 
-  // 金額入力
+ 
   const onChangeAmount = (e) => {
     let raw = e.target.value;
     raw = raw.replace(/，/g, ",").replace(/．/g, ".").replace(/,/g, "");
@@ -140,11 +140,11 @@ export function ProjectDetail() {
 
   return (
     <AppLayout>
-      {/* コンテンツ幅を中央固定＋左右パディング（横スク起点を減らす） */}
+      
       <div className="w-full max-w-7xl mx-auto mt-10 px-4 sm:px-6 lg:px-8">
-        {/* 2カラム：子要素に min-w-0 を渡して“縮み崩れ”防止（Samsungで効く） */}
+        
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-          {/* Left */}
+         
           <div className="md:col-span-3 min-w-0">
             <Card className="shadow-lg bg-white rounded-xl h-full overflow-hidden">
               <CardContent className="p-8 space-y-6">
@@ -180,7 +180,7 @@ export function ProjectDetail() {
                     })}
                   </div>
 
-                  {/* Progressは常に数値の derived.progress を使う（%文字列混入対策） */}
+                 
                   <Progress value={derived.progress} />
                   <div className="text-sm text-gray-600">
                     Progress: {derived.progress}%
@@ -227,7 +227,7 @@ export function ProjectDetail() {
             </Card>
           </div>
 
-          {/* Right */}
+      
           <div className="md:col-span-2 min-w-0">
             <Card className="bg-white/90 backdrop-blur-md shadow-md rounded-xl h-full overflow-hidden">
               <CardContent className="p-6 space-y-6">

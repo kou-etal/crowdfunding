@@ -11,11 +11,11 @@ class CrowdfundingSupport extends Model
         'project_id',
         'amount',
         'currency',
-        'payment_id',        // PayPal取引ID
-        'provider',          // 'paypal' 固定
-        'stripe_session_id', // 将来の拡張用（今は使わない）
+        'payment_id',        
+        'provider',          
+        'stripe_session_id', 
         'supported_at',
-        'raw_payload',       // WebhookやAPIレスポンスのJSON
+        'raw_payload',       
     ];
 
     public function user()

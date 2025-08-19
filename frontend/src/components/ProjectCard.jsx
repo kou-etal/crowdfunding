@@ -14,13 +14,9 @@ const parsePercent = (v) => {
   }
   return null;
 };
-const isPastDay = (iso) => {
-  if (!iso) return false;
-  const d = new Date(iso);
-  const today = new Date();
-  const day = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
-  return day(d) < day(today);
-};
+
+
+const startOfDay = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 
 const ProjectCard = ({ project }) => {
   const goal = toInt(project.goal_amount, 0);
@@ -47,24 +43,31 @@ const ProjectCard = ({ project }) => {
       ? Math.round((percent / 100) * goal)
       : 0;
 
-  const deadlineOk = !project.deadline || !isPastDay(project.deadline);
+  
+  const remainingDays = (() => {
+    if (!project.deadline) return null;
+    const deadline = new Date(project.deadline);
+    const today = new Date();
+    const diffDays = Math.ceil((startOfDay(deadline) - startOfDay(today)) / (1000 * 60 * 60 * 24));
+    return diffDays; 
+  })();
+
+  
   const reached =
     Boolean(project.is_goal_reached) ||
     percent >= 100 ||
     (goal > 0 && totalRaw >= goal);
-  if (!deadlineOk || reached) return null;
 
-  const daysRemaining = (() => {
-    if (!project.deadline) return null;
-    const deadlineDate = new Date(project.deadline);
-    const today = new Date();
-    const diff = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
-    return diff < 0 ? "Ended" : `${diff} days`;
-  })();
+  const expiredByDays = project.deadline ? remainingDays <= 0 : false;
+
+  if (reached || expiredByDays) return null;
+
+  const daysRemainingLabel =
+    remainingDays == null ? null : `${remainingDays} days`;
 
   return (
     <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden relative group w-full">
-      {/* 画像もSPAリンクに */}
+      
       <Link
         to={`/crowdfunding/${project.id}`}
         className="relative w-full h-48 overflow-hidden bg-gray-200 block"
@@ -76,19 +79,15 @@ const ProjectCard = ({ project }) => {
           loading="lazy"
           decoding="async"
         />
-        {daysRemaining && (
-          <div
-            className={`absolute top-2 right-2 text-white text-sm px-3 py-1 rounded-full font-bold ${
-              daysRemaining === "Ended" ? "bg-gray-600" : "bg-blue-900"
-            }`}
-          >
-            <span>{daysRemaining} left</span>
+        {daysRemainingLabel && (
+          <div className="absolute top-2 right-2 text-white text-sm px-3 py-1 rounded-full font-bold bg-blue-900">
+            <span>{daysRemainingLabel} left</span>
           </div>
         )}
       </Link>
 
       <div className="p-5">
-        {/* Avatar and Owner name */}
+   
         <div className="flex items-center space-x-3 mb-4 mt-2 ml-2 relative z-10 min-w-0">
           <img
             src={project.ownerAvatarUrl}
@@ -102,7 +101,7 @@ const ProjectCard = ({ project }) => {
           </p>
         </div>
 
-        {/* Title and description */}
+    
         <h3 className="text-2xl font-bold text-gray-900 mb-2 mt-2 leading-tight">
           {project.title}
         </h3>
@@ -110,7 +109,7 @@ const ProjectCard = ({ project }) => {
           {project.description}
         </p>
 
-        {/* Progress and amounts */}
+        
         <div className="mb-4">
           <div className="flex justify-between items-baseline mb-1 text-sm font-medium">
             <span className="text-blue-700 font-bold">
@@ -121,10 +120,10 @@ const ProjectCard = ({ project }) => {
             </span>
           </div>
           <Progress value={percent} className="w-full h-2 bg-blue-200 [&>*]:bg-blue-600" />
-          <p className="text-right text-xs text-gray-500 mt-1">Progress: {percent}%</p>
+          <p className="text-right text-xs text-gray-500 mt-1">{percent}% funded</p>
         </div>
 
-        {/* View Details */}
+       
         <Link
           to={`/crowdfunding/${project.id}`}
           className="block w-full text-center bg-blue-600 text-white text-lg font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300"

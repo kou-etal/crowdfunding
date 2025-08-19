@@ -3,8 +3,6 @@ import {RegisterForm} from './pages/RegisterForm';
 import {LogoutTest} from './pages/LogoutTest';
 import {LoginFormTest} from './pages/LoginFormTest';
 import {DashBoard} from './pages/DashBoard';
-import {UserData} from './pages/UserData';
-import {User} from './pages/User';
 import {ProfileEdit} from './pages/ProfileEdit';
 import {CrowdfundingProjectForm} from './pages/CrowdfundingProjectForm';
 import {ProjectDetail} from './pages/ProjectDetail';
@@ -29,13 +27,11 @@ export function App() {
         <Route path="/email/verify/:id/:hash" element={<VerifyEmail />} />
         <Route path="/login" element={<LoginFormTest/>} />
         <Route path="/logout" element={<LogoutTest/>} />
-        <Route path="/users" element={<User/>} />
         <Route path="/post" element={<CrowdfundingProjectForm/>} />
         <Route path="/edit" element={<ProfileEdit/>} />
         <Route path="/admin/verify" element={< AdminIdentityVerificationList/>} />
         <Route path="/admin/pay" element={< AdminPayoutRecords/>} />
         <Route path="/admin/dashboard" element={<DashBoard/>} />
-        <Route path="/admin/users" element={<UserData/>} />
         <Route path="/admin/review" element={<AdminProjectReview/>} />
         <Route path="/success" element={<SupportSuccess/>} />
         <Route path="/verify" element={<IdentityVerificationForm />} />

@@ -16,7 +16,7 @@ export function LogoutTest() {
         await axiosInstance.get('/sanctum/csrf-cookie', { withCredentials: true });
         await axiosInstance.post('/logout', null, { withCredentials: true });
         setMessage('Log out successful.');
-        // ★ ここで遷移して AppLayout を再マウント → /api/profile が未ログインに更新される
+       
         navigate('/', { replace: true });
       } catch (err) {
         console.error('Logout failed', err?.response?.data);
@@ -25,7 +25,7 @@ export function LogoutTest() {
     })();
   }, [navigate]);
 
-  // リダイレクト前の一瞬だけ見えるUI（任意）
+ 
   return (
     <AppLayout>
       <div className="min-dvh w-full flex items-center justify-center px-4">

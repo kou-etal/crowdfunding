@@ -8,14 +8,14 @@ import { Button } from '@/components/ui/button';
 import AppLayout from '../components/AppLayout';
 import { useNavigate } from 'react-router-dom';
 
-/** ← 追加：YYYY-MM-DD を“ローカル日付”で解釈（UTCズレ対策） */
+
 const parseDateLocal = (yyyy_mm_dd) => {
   if (!yyyy_mm_dd) return null;
   const [y, m, d] = yyyy_mm_dd.split('-').map((n) => parseInt(n, 10));
   if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d); // ローカルの 00:00
+  return new Date(y, m - 1, d); 
 };
-/** 同日比較用の 00:00 に丸める */
+
 const startOfDay = (dt) => new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
 
 export function CrowdfundingProjectForm() {
@@ -74,7 +74,7 @@ export function CrowdfundingProjectForm() {
       hasError = true;
     }
 
-    const deadlineMsg = validateDeadline(deadline);  // ★共通関数で検証
+    const deadlineMsg = validateDeadline(deadline); 
     if (deadlineMsg) {
       setDeadlineError(deadlineMsg);
       hasError = true;
@@ -105,7 +105,7 @@ export function CrowdfundingProjectForm() {
         title: title.trim(),
         description,
         goal_amount: goalNum,
-        deadline,          // 文字列のままでOK（サーバ側で扱う）
+        deadline,         
         image_path: imageUrl,
       });
 
@@ -180,7 +180,7 @@ export function CrowdfundingProjectForm() {
                 <Input
                   id="goalAmount"
                   type="number"
-                  inputMode="numeric"         // ★モバイルでの入力性UP
+                  inputMode="numeric"        
                   min={10}
                   max={1000000}
                   step={1}
@@ -216,7 +216,7 @@ export function CrowdfundingProjectForm() {
                   onChange={(e) => {
                     const value = e.target.value;
                     setDeadline(value);
-                    setDeadlineError(validateDeadline(value)); // ★ローカル日付で検証
+                    setDeadlineError(validateDeadline(value)); 
                   }}
                   required
                 />

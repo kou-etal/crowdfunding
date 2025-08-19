@@ -28,7 +28,7 @@ export function DashBoard() {
           Admin Panel
         </h1>
 
-        {/* サムスン対策：横スク抑止のため子にmin-w-0を渡す */}
+      
         <div className="grid gap-6">
           {menuItems.map((item, idx) => (
             <Link
@@ -37,7 +37,7 @@ export function DashBoard() {
               aria-label={item.title}
               className="block min-w-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-lg"
             >
-              {/* hover拡大はLinkではなくCardに付けてはみ出し防止 */}
+              
               <Card className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg rounded-lg transition-all duration-200 transform-gpu hover:scale-[1.02] overflow-hidden">
                 <CardContent className="p-6">
                   <h2 className="text-lg font-semibold break-words">{item.title}</h2>

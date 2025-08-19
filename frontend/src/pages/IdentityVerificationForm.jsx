@@ -30,7 +30,7 @@ export function IdentityVerificationForm() {
     setForm((prev) => ({ ...prev, honor_statement: !!checked }));
   };
 
-  // ★ 画像バリデーション（タイプ & 5MB）
+ 
   const validateImage = (file) => {
     if (!file) return "File is required.";
     if (!file.type?.startsWith("image/")) return "Please select an image file.";
@@ -192,7 +192,7 @@ export function IdentityVerificationForm() {
               {errors.supervisor_affiliation && <p className="text-red-500 text-sm mt-1">{errors.supervisor_affiliation}</p>}
             </div>
 
-            {/* gapではなくspace-xで安定、長文でも折り返し */}
+           
             <div className="flex items-start space-x-2 min-w-0">
               <Checkbox
                 id="honor_statement"

@@ -71,9 +71,7 @@ class CrowdfundingSupportApiController extends Controller
         return response()->json(['url' => $approvalUrl]);
     }
 
-    /**
-     * PayPal アクセストークン取得
-     */
+    
     private function getPaypalAccessToken(string $clientId, string $secret): string
     {
         $base = $this->paypalBase();
@@ -92,9 +90,6 @@ class CrowdfundingSupportApiController extends Controller
         return $res->json('access_token');
     }
 
-    /**
-     * PayPal 注文作成（USD 小数）
-     */
     private function createPaypalOrder(string $accessToken, array $data): array
     {
         $base = $this->paypalBase();
@@ -128,9 +123,7 @@ class CrowdfundingSupportApiController extends Controller
         return $res->json();
     }
 
-    /**
-     * サンドボックス/本番のベースURL
-     */
+    
     private function paypalBase(): string
     {
         return rtrim(config('services.paypal.base', 'https://api-m.sandbox.paypal.com'), '/');

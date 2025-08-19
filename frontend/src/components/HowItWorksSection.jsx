@@ -26,13 +26,13 @@ export default function HowItWorksSection() {
     ];
   }, [role]);
 
-  // アニメ設定（低速端末や低電力モードでは最小化）
+  
   const itemTransition = prefersReducedMotion
     ? { duration: 0.001 }
     : { type: "spring", stiffness: 300, damping: 24 };
 
   return (
-    <section className="w-full bg-gradient-to-b from-white to-blue-50 border-y border-blue-50">
+    <section className="w-full bg-gradient-to-b from-white to-blue-50 border-y border-blue-50 py-30">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10 py-14 min-w-0">
         <div className="flex flex-col items-center text-center gap-4 mb-10 min-w-0">
           <h2 className="text-3xl md:text-4xl font-extrabold text-blue-900 break-words [overflow-wrap:anywhere] [hyphens:auto]">
@@ -43,7 +43,7 @@ export default function HowItWorksSection() {
           </p>
         </div>
 
-        {/* トグル：Galaxy のタップ連打でも安定（aria付き & touchAction） */}
+      
         <div
           role="tablist"
           aria-label="Select role"
@@ -68,7 +68,7 @@ export default function HowItWorksSection() {
           })}
         </div>
 
-        {/* アドレスバー出入りでの再発火抑制：once:true/amountを控えめに */}
+        
         <motion.ol
           initial="hidden"
           whileInView="show"
@@ -84,7 +84,7 @@ export default function HowItWorksSection() {
                 exit={prefersReducedMotion ? { opacity: 0 } : { y: -16, opacity: 0 }}
                 transition={itemTransition}
                 className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm min-w-0"
-                style={{ willChange: prefersReducedMotion ? "auto" : "transform" }} // Galaxyのチラつき抑止
+                style={{ willChange: prefersReducedMotion ? "auto" : "transform" }}
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white font-bold flex-shrink-0 select-none">
                   {i + 1}

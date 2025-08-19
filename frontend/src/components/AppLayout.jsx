@@ -54,15 +54,15 @@ export default function AppLayout({ children }) {
   else isPostDisabled = false;
 
   return (
-    // vhズレ対策：min-dvh（index.cssに追加済みユーティリティ）
+    
     <div className="min-dvh flex flex-col">
-      {/* ▼ ナビゲーション */}
+     
       {isMobile ? (
         <MobileMenu user={user} />
       ) : (
-        // w-full固定 / 高さはモバイル16, mdで20
+       
         <nav className="w-full h-16 md:h-20 bg-white text-blue-900 border-b border-blue-200 flex items-center justify-between px-4 sm:px-6 md:px-8 shadow-lg">
-          {/* 左：ロゴ＋ロール */}
+          
           <div className="flex flex-col items-start">
             <Link
               to="/"
@@ -77,7 +77,7 @@ export default function AppLayout({ children }) {
             )}
           </div>
 
-          {/* 右：ナビ（gap依存を避けspace-xで安定） */}
+         
           <div className="flex items-center space-x-4 md:space-x-8">
             <Button
               asChild
@@ -189,10 +189,10 @@ export default function AppLayout({ children }) {
         </nav>
       )}
 
-      {/* ▼ メイン */}
+      
       <main className="w-full">{children}</main>
 
-      {/* ▼ フッター */}
+    
       <footer className="w-full border-t mt-8">
         <div className="max-w-xl mx-auto text-center text-xs md:text-sm text-gray-500 py-4">
           © {new Date().getFullYear()} FundMyThesis. All rights reserved.

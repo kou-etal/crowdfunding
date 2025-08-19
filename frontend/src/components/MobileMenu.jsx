@@ -46,7 +46,7 @@ export default function MobileMenu() {
     }
   };
 
-  // モバイル：詰まり防止（省略なし・中央寄せ）
+  
   const btnBase  = "w-full min-h-11 py-2 text-white text-sm";
   const linkBase = "block w-full text-center whitespace-normal leading-snug";
 
@@ -199,7 +199,7 @@ export default function MobileMenu() {
 
   return (
     <>
-      {/* ロゴ帯 */}
+     
       <div className="bg-white border-b border-blue-200 px-4 py-2 flex flex-col items-start">
         <Link
           to="/"
@@ -214,7 +214,7 @@ export default function MobileMenu() {
         )}
       </div>
 
-      {/* 段組みメニュー（divideで等間隔） */}
+      
       <nav className="bg-slate-800 text-white border-b shadow-sm">
         {rows.map((row, idx) => {
           const cols =

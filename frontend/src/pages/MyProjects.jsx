@@ -3,12 +3,12 @@ import { axiosInstance } from '../api/axiosInstance';
 import { Card, CardContent } from '@/components/ui/card';
 import AppLayout from '../components/AppLayout';
 
-/* ★ Android/SamsungのYYYY-MM-DD→UTC解釈ズレを避けるためのローカル日付パーサ */
+
 const parseDateLocal = (yyyy_mm_dd) => {
   if (!yyyy_mm_dd) return null;
   const [y, m, d] = String(yyyy_mm_dd).split('-').map((n) => parseInt(n, 10));
   if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d); // ローカル 00:00
+  return new Date(y, m - 1, d); 
 };
 const formatDateLocal = (iso) => {
   const dt = parseDateLocal(iso);

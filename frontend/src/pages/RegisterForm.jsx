@@ -19,7 +19,7 @@ export function RegisterForm() {
 
   const navigate = useNavigate();
 
-  // パスワード長の即時バリデーション
+  
   useEffect(() => {
     setPasswordTooShort(password.length > 0 && password.length < 8);
   }, [password]);
@@ -36,7 +36,7 @@ export function RegisterForm() {
     }
 
     try {
-      // ★ CSRFとCookieを確実に
+     
       await axiosInstance.get("/sanctum/csrf-cookie", { withCredentials: true });
       const res = await axiosInstance.post(
         "/api/register",
@@ -59,10 +59,10 @@ export function RegisterForm() {
     }
   };
 
-  // 成功後2秒でトップへ
+ 
   useEffect(() => {
     if (message) {
-      const timer = setTimeout(() => navigate("/"), 2000);
+      const timer = setTimeout(() => navigate("/"), 100);
       return () => clearTimeout(timer);
     }
   }, [message, navigate]);
@@ -76,7 +76,7 @@ export function RegisterForm() {
           </h1>
 
           <form onSubmit={handleSubmit} className="space-y-4" aria-label="Registration form">
-            {/* Username */}
+           
             <div>
               <Label htmlFor="name">
                 Username <span className="text-red-500">*</span>
@@ -101,7 +101,7 @@ export function RegisterForm() {
               {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name[0]}</p>}
             </div>
 
-            {/* Email */}
+           
             <div>
               <Label htmlFor="email">
                 Email Address <span className="text-red-500">*</span>
@@ -124,7 +124,7 @@ export function RegisterForm() {
               {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>}
             </div>
 
-            {/* Password */}
+          
             <div>
               <Label htmlFor="password">
                 Password <span className="text-red-500">*</span>
@@ -155,7 +155,7 @@ export function RegisterForm() {
               {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password[0]}</p>}
             </div>
 
-            {/* Confirm Password */}
+            
             <div>
               <Label htmlFor="passwordConfirm">
                 Confirm Password <span className="text-red-500">*</span>
@@ -191,13 +191,15 @@ export function RegisterForm() {
             </Button>
           </form>
 
-          {message && (
-            <p className="text-green-600 text-center font-medium mt-4" aria-live="polite">
-              {message}
-            </p>
-          )}
+          
         </CardContent>
       </Card>
     </AppLayout>
   );
 }
+
+/*{message && (
+            <p className="text-green-600 text-center font-medium mt-4" aria-live="polite">
+              {message}
+            </p>
+          )}*/

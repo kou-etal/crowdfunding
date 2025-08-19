@@ -1,4 +1,4 @@
-// src/pages/AdminIdentityVerificationListMobile.jsx
+
 import { Button } from "@/components/ui/button";
 
 export function AdminIdentityVerificationListMobile({
@@ -21,7 +21,7 @@ export function AdminIdentityVerificationListMobile({
 
       {pending.map((v) => (
         <div key={v.id} className="border rounded-lg shadow-sm overflow-hidden bg-white">
-          {/* 1段目: 顔写真 */}
+         
           <div className="p-4">
             <p className="font-semibold mb-2 text-center">Face Photo</p>
             <img
@@ -33,7 +33,7 @@ export function AdminIdentityVerificationListMobile({
             />
           </div>
 
-          {/* 2段目: 書類写真 */}
+        
           <div className="px-4 pb-4">
             <p className="font-semibold mb-2 text-center">Document</p>
             <img
@@ -45,7 +45,7 @@ export function AdminIdentityVerificationListMobile({
             />
           </div>
 
-          {/* 3段目: 情報一覧 */}
+          
           <div className="px-4 pb-4 space-y-1 text-sm break-words">
             <p><strong>User ID:</strong> {v.user_id}</p>
             <p><strong>Name:</strong> {v.user?.name || "N/A"}</p>
@@ -55,7 +55,7 @@ export function AdminIdentityVerificationListMobile({
             <p><strong>Honor Statement:</strong> {v.honor_statement ? "✓" : "✗"}</p>
           </div>
 
-          {/* アクション */}
+          
           <div className="flex gap-2 justify-end px-4 pb-4">
             <Button onClick={() => onAction?.(v.id, "approve")}>Approve</Button>
             <Button variant="destructive" onClick={() => onAction?.(v.id, "reject")}>

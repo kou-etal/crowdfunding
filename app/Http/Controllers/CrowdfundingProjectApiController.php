@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 class CrowdfundingProjectApiController extends Controller
 {
-    // 投稿（プロジェクト作成）
+
     public function store(Request $request)
 {
     $validated = $request->validate([
@@ -18,7 +18,7 @@ class CrowdfundingProjectApiController extends Controller
         'description' => 'required|string|max:5000',
         'goal_amount' => 'required|integer|min:10|max:1000000',
         'deadline' => 'required|date|after:today',
-        'image_path' => 'nullable|string|max:1000', // ← URLとして受け取る
+        'image_path' => 'nullable|string|max:1000', 
     ]);
 
     $project = CrowdfundingProject::create([
@@ -58,22 +58,22 @@ public function reject(Request $request, $id)
 {
     $project = CrowdfundingProject::findOrFail($id);
 
-    // 未提出のものは却下できない
+  
     if (!$project->is_submitted) {
         return response()->json(['message' => 'まだ提出されていません'], 400);
     }
 
-    // すでに承認済みなら却下できない
+    
     if ($project->is_approved) {
         return response()->json(['message' => 'すでに承認されています'], 400);
     }
 
-    // バリデーション（任意理由付き）
+   
     $validated = $request->validate([
         'rejected_reason' => 'nullable|string|max:1000',
     ]);
 
-    // 却下フラグと理由を更新
+
     $project->update([
         'is_rejected' => true,
         'rejected_reason' => $validated['rejected_reason'] ?? null,
@@ -117,12 +117,12 @@ public function approve(Request $request, $id)
 }
 
 
-    // 一覧取得
+   
 public function index()
 {
    $projects = CrowdfundingProject::where('is_approved', true)
     ->where('is_rejected', false)
-    ->with(['user.identityVerification', 'supports.user']) // supports 必須
+    ->with(['user.identityVerification', 'supports.user']) 
     ->orderBy('created_at', 'desc')
     ->get()
     ->map(function ($project) {

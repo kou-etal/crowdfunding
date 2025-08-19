@@ -85,7 +85,7 @@ public function updateIntroduction(Request $request)
 {
     $validated = $request->validate([
         'name' => 'string|max:255',
-        'full_name' => 'nullable|string|max:255', // フルネーム追加
+        'full_name' => 'nullable|string|max:255', 
         'bio' => 'nullable|string|max:2000',
         'role' => 'required|in:researcher,supporter',
         'degree' => 'nullable|string|in:修士,博士,その他',
@@ -132,7 +132,7 @@ public function uploadImage(Request $request)
     $path = $request->file('image')->store('profile_images', 'public');
 
     $user = $request->user();
-    $user->profile_image = config('app.url') . '/storage/' . $path; // 絶対URLで保存
+    $user->profile_image = config('app.url') . '/storage/' . $path; 
     $user->save();
 
     return response()->json(['profile_image' => $user->profile_image], 200);

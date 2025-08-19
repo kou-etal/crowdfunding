@@ -48,7 +48,7 @@ export function LoginFormTest() {
           </h1>
 
           <form onSubmit={handleSubmit} className="space-y-4" aria-label="Login form">
-            {/* Email */}
+           
             <div>
               <Label htmlFor="email">
                 Email Address <span className="text-red-500">*</span>
@@ -57,7 +57,7 @@ export function LoginFormTest() {
                 id="email"
                 name="email"
                 type="email"
-                autoComplete="email"       // ★端末間の入力補助差を統一
+                autoComplete="email"       
                 autoCapitalize="none"
                 spellCheck={false}
                 aria-required="true"
@@ -75,7 +75,7 @@ export function LoginFormTest() {
               )}
             </div>
 
-            {/* Password */}
+           
             <div>
               <Label htmlFor="password">
                 Password <span className="text-red-500">*</span>
@@ -84,7 +84,7 @@ export function LoginFormTest() {
                 id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"  // ★Samsungのオートフィル挙動を安定化
+                autoComplete="current-password"  
                 autoCapitalize="none"
                 spellCheck={false}
                 aria-required="true"
@@ -102,7 +102,6 @@ export function LoginFormTest() {
               )}
             </div>
 
-            {/* エラー全般 */}
             {errors.general && (
               <p className="text-red-500 text-sm mt-1 text-center">
                 {errors.general[0]}

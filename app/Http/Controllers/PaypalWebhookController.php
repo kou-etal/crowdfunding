@@ -10,12 +10,7 @@ use Carbon\Carbon;
 
 class PayPalWebhookController extends Controller
 {
-    /**
-     * Webhook 入口
-     * - 署名検証（本番推奨。local のみスキップ可）
-     * - CHECKOUT.ORDER.APPROVED: サーバ側で capture 実行（冪等）
-     * - PAYMENT.CAPTURE.COMPLETED: DB に保存（冪等）
-     */
+   
     public function handleWebhook(Request $request)
     {
         $raw = $request->getContent();
@@ -51,10 +46,7 @@ class PayPalWebhookController extends Controller
         return response()->json(['status' => 'ignored']);
     }
 
-    /**
-     
-     * - レスポンスに capture が含まれていれば即保存（Webhook遅延対策）
-     */
+    
     private function captureOrder(string $orderId): void
     {
         $clientId = config('services.paypal.client_id');

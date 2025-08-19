@@ -1,4 +1,4 @@
-// src/pages/AdminIdentityVerificationList.jsx
+
 import { useEffect, useState } from "react";
 import { axiosInstance } from "../api/axiosInstance";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,7 @@ export function AdminIdentityVerificationList() {
 
   return (
     <AppLayout>
-      {/* モバイル（~md） */}
+      
       <div className="block md:hidden">
         <AdminIdentityVerificationListMobile
           verifications={verifications}
@@ -55,7 +55,7 @@ export function AdminIdentityVerificationList() {
         />
       </div>
 
-      {/* デスクトップ（md~） */}
+     
       <div className="hidden md:block">
         <div className="max-w-5xl mx-auto mt-20 space-y-6 px-4">
           <h1 className="text-3xl font-bold text-center text-blue-900">
@@ -72,7 +72,7 @@ export function AdminIdentityVerificationList() {
                 key={v.id}
                 className="flex w-full p-4 border rounded-lg shadow-md bg-white"
               >
-                {/* 画像列 */}
+               
                 <div className="flex items-center space-x-4 pr-4">
                   <div className="text-center">
                     <strong>Face Photo:</strong><br />
@@ -96,7 +96,7 @@ export function AdminIdentityVerificationList() {
                   </div>
                 </div>
 
-                {/* 情報列：縮み崩れ対策 */}
+                
                 <div className="flex flex-grow flex-col justify-between pl-4 min-w-0">
                   <div className="grid grid-cols-2 gap-x-1">
                     <div className="min-w-0">
