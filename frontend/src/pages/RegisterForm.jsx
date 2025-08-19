@@ -62,7 +62,7 @@ export function RegisterForm() {
  
   useEffect(() => {
     if (message) {
-      const timer = setTimeout(() => navigate("/"), 100);
+      const timer = setTimeout(() => navigate("/"), 2000);
       return () => clearTimeout(timer);
     }
   }, [message, navigate]);
@@ -191,6 +191,12 @@ export function RegisterForm() {
             </Button>
           </form>
 
+          {message && (
+            <p className="text-green-600 text-center font-medium mt-4" aria-live="polite">
+              Your registration is complete!
+            </p>
+          )}
+
           
         </CardContent>
       </Card>
@@ -198,8 +204,3 @@ export function RegisterForm() {
   );
 }
 
-/*{message && (
-            <p className="text-green-600 text-center font-medium mt-4" aria-live="polite">
-              {message}
-            </p>
-          )}*/
