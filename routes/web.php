@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Log;
 use Pusher\Pusher;
-use App\Http\Controllers\PusherAuthController;
+
 
 Route::post('/my-broadcast-auth', [PusherAuthController::class, 'authenticate'])
     ->middleware(['web', 'auth:sanctum']);

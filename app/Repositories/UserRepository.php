@@ -15,4 +15,19 @@ class UserRepository
             'password' => Hash::make($data['password']),
         ]);
     }
+     public function findByEmail(string $email): ?User
+    {
+        return User::where('email', $email)->first();
+    }
+
+    public function update(User $user, array $attributes): User
+    {
+        $user->fill($attributes)->save();
+        return $user;
+    }
+
+    public function getMinimalList()
+    {
+        return User::select('id','name')->get();
+    }
 }

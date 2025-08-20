@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
@@ -141,5 +142,47 @@ public function uploadImage(Request $request)
 
 
 }
+/*
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\Profile\UpdateProfileRequest;
+use App\Http\Requests\Profile\UpdateIntroductionRequest;
+use App\Http\Requests\Profile\UploadImageRequest;
+use App\Http\Resources\UserResource;
+use App\Repositories\UserRepository;
+use App\Services\ProfileService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class ProfileApiController extends Controller
+{
+ public function __construct(private ProfileService $service) {}
+
+    
+    public function show(Request $request)
+    {
+        return new UserResource($request->user());
+    }
+
+    public function update(UpdateProfileRequest $request)
+    {
+        $user = $this->service->updateBasic($request->user(), $request->validated());
+        return response()->json(['message' => '更新しました']);
+    }
+
+    public function uploadImage(UploadImageRequest $request, ProfileService $service)
+{
+    $user = $request->user();
+    $url  = $service->uploadImage($user, $request->file('image'));
+
+    return response()->json([
+        'message'       => 'Profile image updated.',
+        'profile_image' => $url,
+        'user'          => new UserResource($user->fresh()),
+    ], 200);
+}
+}
 
 
+*/

@@ -3,10 +3,10 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Broadcast;
-use App\Http\Controllers\ProfileApiController;
 use App\Http\Controllers\RegisterApiController;
+use App\Http\Controllers\AuthApiController;
+use App\Http\Controllers\ProfileApiController;
 use App\Http\Middleware\AdminMiddleware;
-use App\Http\Controllers\PusherAuthController;
 use App\Http\Controllers\VerifyEmailController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\CrowdfundingProjectApiController;
@@ -15,6 +15,28 @@ use App\Http\Controllers\IdentityVerificationApiController;
 use App\Http\Controllers\IdentityVerificationAdminController;
 use App\Http\Controllers\PayoutRecordApiController;
 use App\Http\Controllers\PayPalWebhookController;
+
+
+Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware(['auth:sanctum']);
+
+Route::post('/register',[RegisterApiController::class, 'register']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/profile', [ProfileApiController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileApiController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileApiController::class, 'destroy'])->name('profile.destroy');
+});
+
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/profile', [ProfileApiController::class, 'show']);
+    Route::post('/profile', [ProfileApiController::class, 'updateIntroduction']);
+    Route::post('/profile-image', [ProfileApiController::class, 'uploadImage']);
+});
+
 
 Route::post('/paypal/webhook', [PayPalWebhookController::class, 'handleWebhook']);
 
@@ -51,12 +73,9 @@ Route::get('/crowdfunding-projects/{id}', [CrowdfundingProjectApiController::cla
 
 
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware(['auth:sanctum']);
 
 
-Route::post('/register',[RegisterApiController::class, 'register']);
+
 
 
 
@@ -72,7 +91,7 @@ Route::middleware(['auth:sanctum',AdminMiddleware::class])->group(function () {
     Route::post('/admin/payout-records/{id}/mark-paid', [PayoutRecordApiController::class, 'markAsPaid']);
     
 });
-Route::middleware('auth:sanctum')->get('/users',[ProfileApiController::class, 'index']);
+
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-projects', [CrowdfundingProjectApiController::class, 'myProjects']);
@@ -83,19 +102,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/profile', [ProfileApiController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileApiController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileApiController::class, 'destroy'])->name('profile.destroy');
-});
-
-
-
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/profile', [ProfileApiController::class, 'show']);
-    Route::post('/profile', [ProfileApiController::class, 'updateIntroduction']);
-    Route::post('/profile-image', [ProfileApiController::class, 'uploadImage']);
-});
 
 
 
