@@ -1,69 +1,45 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use App\Models\IdentityVerification;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Identity\StoreIdentityVerificationRequest;
+use App\Http\Requests\Identity\UploadVerificationImagesRequest;
+use App\Services\Identity\IdentitySubmissionService;
+use App\Services\Identity\VerificationImageService;
 
 class IdentityVerificationApiController extends Controller
 {
-public function store(Request $request)
-{
- 
+    public function __construct(
+        private readonly IdentitySubmissionService $submission,
+        private readonly VerificationImageService $uploader
+    ) {}
 
-  
-$request->validate([
-    'face_image_path' => 'required|string|max:1000',
-    'document_image_path' => 'required|string|max:1000',
-    'honor_statement' => 'accepted',
-    'supervisor_name' => 'required|string|max:255',
-    'supervisor_email' => 'required|email',
-    'supervisor_affiliation' => 'required|string|max:255',
-]);
+    public function store(StoreIdentityVerificationRequest $request)
+    {
+        $user = $request->user();
 
+        $verification = $this->submission->submit($user, $request->only([
+            'face_image_path',
+            'document_image_path',
+            'supervisor_name',
+            'supervisor_email',
+            'supervisor_affiliation',
+        ]));
 
-    $user = $request->user();
-
-    if ($user->identityVerification) {
-        return response()->json(['message' => 'すでに本人確認を提出済みです'], 422);
+        return response()->json([
+            'message'      => '本人確認を提出しました',
+            'verification' => $verification,
+        ], 201);
     }
 
-    $verification = IdentityVerification::create([
-        'user_id' => $user->id,
-        'face_image_path' => $request->input('face_image_path'),
-        'document_image_path' => $request->input('document_image_path'),
-        'honor_statement' => true,
-        'supervisor_name' => $request->input('supervisor_name'),
-        'supervisor_email' => $request->input('supervisor_email'),
-        'supervisor_affiliation' => $request->input('supervisor_affiliation'),
-        'status' => 'pending',
-    ]);
+    public function uploadVerificationImages(UploadVerificationImagesRequest $request)
+    {
+        $urls = $this->uploader->upload(
+            $request->file('face_image'),
+            $request->file('document_image'),
+        );
 
-    return response()->json([
-        'message' => '本人確認を提出しました',
-        'verification' => $verification,
-    ], 201);
-}
-
-
-public function uploadVerificationImages(Request $request)
-{
-    $request->validate([
-        'face_image' => 'required|image|max:5000',
-        'document_image' => 'required|image|max:5000',
-    ]);
-
-    $facePath = $request->file('face_image')->store('identity/face', 'public');
-    $docPath = $request->file('document_image')->store('identity/document', 'public');
-
-    $faceImageUrl = config('app.url') . '/storage/' . $facePath;
-    $documentImageUrl = config('app.url') . '/storage/' . $docPath;
-
-    return response()->json([
-        'face_image_url' => $faceImageUrl,
-        'document_image_url' => $documentImageUrl,
-    ]);
-}
-
-
+        return response()->json($urls);
+    }
 }
