@@ -74,18 +74,24 @@ class ProfileApiController extends Controller
     public function index()
     {
         return response()->json(
-        User::select('id', 'name')->get()  
+        User::select('id', 'name')->get()
     );
     }
-         public function show(Request $request)
-    {
+        public function show(Request $request){
+   $user = $request->user();
+
+   if($user) {
         return response()->json($request->user());
     }
+   return response()->json(null, 200);//REST的には正しくない.本来はAPIにauthつけてAPI側で解決するべき。でもめんどくさい
+        }
+
+
 public function updateIntroduction(Request $request)
 {
     $validated = $request->validate([
         'name' => 'string|max:255',
-        'full_name' => 'nullable|string|max:255', // フルネーム追加
+        'full_name' => 'nullable|string|max:255', 
         'bio' => 'nullable|string|max:2000',
         'role' => 'required|in:researcher,supporter',
         'degree' => 'nullable|string|in:修士,博士,その他',

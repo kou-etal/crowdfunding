@@ -16,14 +16,24 @@ import Footer from "./Footer";
 export default function AppLayout({ children }) {
   const [user, setUser] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [scrolled, setScrolled] = useState(false); // ← 追加：スクロール検知
+  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
+    const controller = new AbortController();
+
+   
     axiosInstance
-      .get("/api/profile")
-      .then((res) => setUser(res.data))
+      .get("/api/session", { signal: controller.signal })
+      .then((res) => {
+        const data = res?.data;
+        if (data && data.authenticated) {
+          setUser(data.user || null);
+        } else {
+          setUser(null);
+        }
+      })
       .catch(() => setUser(null));
 
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -35,6 +45,7 @@ export default function AppLayout({ children }) {
     window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
+      controller.abort();
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("scroll", onScroll);
     };
@@ -65,12 +76,11 @@ export default function AppLayout({ children }) {
   else isPostDisabled = false;
 
   return (
-    // 全体：固定ヘッダー分の上パディング（ヘッダーh-16/md:h-20）
     <div className="min-dvh flex flex-col">
-        <ScrollManager />
-      {/* ===== Header / Nav（固定・透過・背面ブラー） ===== */}
+      <ScrollManager />
+
+      
       {isMobile ? (
-        // MobileMenuのレイアウトはそのまま。固定のため外側でposition固定のバーを用意
         <div className="fixed inset-x-0 top-0 z-50 bg-white/75 supports-[backdrop-filter]:backdrop-blur-md border-b border-white/40">
           <MobileMenu user={user} />
         </div>
@@ -79,7 +89,6 @@ export default function AppLayout({ children }) {
           className={[
             "fixed inset-x-0 top-0 z-50",
             "h-16 md:h-20",
-            // 透過＋背面ブラー（スクロールで濃く＆影）
             "bg-white/60 supports-[backdrop-filter]:backdrop-blur-md border-b border-white/40",
             scrolled ? "bg-white/85 shadow-md" : "shadow-none",
             "text-blue-900 flex items-center justify-between px-4 sm:px-6 md:px-8 transition-[background-color,box-shadow] duration-300"
@@ -87,7 +96,7 @@ export default function AppLayout({ children }) {
           role="navigation"
           aria-label="Global"
         >
-          {/* 左：ロゴ＋ロール */}
+         
           <div className="flex flex-col items-start">
             <Link
               to="/"
@@ -214,9 +223,7 @@ export default function AppLayout({ children }) {
         </nav>
       )}
 
-      {/* ===== Main =====
-          固定ヘッダーの下にコンテンツが潜らないように上パディング＋
-          ヘッダーとヒーローの間に“少し”の余白（mt-3 md:mt-4） */}
+    
       <main className="w-full pt-20 md:pt-24">
         <div className="mt-3 md:mt-4" />
         {children}
@@ -226,8 +233,3 @@ export default function AppLayout({ children }) {
     </div>
   );
 }
-
-
-
-
-

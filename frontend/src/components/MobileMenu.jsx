@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import { axiosInstance } from "../api/axiosInstance";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { AdminLink } from "./AdminLink";
@@ -10,16 +8,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 
-export default function MobileMenu() {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    axiosInstance
-      .get("/api/profile")
-      .then((res) => setUser(res.data))
-      .catch(() => setUser(null));
-  }, []);
-
+export default function MobileMenu({ user }) {
   const isLoggedIn  = !!user;
   const isSupporter = user?.role === "supporter";
   const isVerified  = user?.is_verified == 1;
@@ -46,7 +35,6 @@ export default function MobileMenu() {
     }
   };
 
-  // モバイル：詰まり防止（省略なし・中央寄せ）
   const btnBase  = "w-full min-h-11 py-2 text-white text-sm";
   const linkBase = "block w-full text-center whitespace-normal leading-snug";
 
@@ -100,9 +88,7 @@ export default function MobileMenu() {
               <Link
                 to={isPostDisabled ? "#" : "/post"}
                 onClick={preventIfDisabled}
-                className={`block px-4 py-2 text-sm ${
-                  isPostDisabled ? "text-gray-400 cursor-not-allowed" : "hover:bg-blue-200 hover:text-blue-900"
-                }`}
+                className={`block px-4 py-2 text-sm ${isPostDisabled ? "text-gray-400 cursor-not-allowed" : "hover:bg-blue-200 hover:text-blue-900"}`}
                 title={isPostDisabled ? postTooltip : ""}
               >
                 New Project
@@ -112,9 +98,7 @@ export default function MobileMenu() {
               <Link
                 to={isPostDisabled ? "#" : "/myprojects"}
                 onClick={preventIfDisabled}
-                className={`block px-4 py-2 text-sm ${
-                  isPostDisabled ? "text-gray-400 cursor-not-allowed" : "hover:bg-blue-200 hover:text-blue-900"
-                }`}
+                className={`block px-4 py-2 text-sm ${isPostDisabled ? "text-gray-400 cursor-not-allowed" : "hover:bg-blue-200 hover:text-blue-900"}`}
                 title={isPostDisabled ? postTooltip : ""}
               >
                 My Projects
@@ -131,7 +115,8 @@ export default function MobileMenu() {
       key: "admin",
       node: (
         <div className="w-full min-h-11 flex items-center justify-center">
-          <AdminLink />
+         
+          <AdminLink user={user} />
         </div>
       ),
     });
@@ -199,12 +184,8 @@ export default function MobileMenu() {
 
   return (
     <>
-      {/* ロゴ帯 */}
       <div className="bg-white border-b border-blue-200 px-4 py-2 flex flex-col items-start">
-        <Link
-          to="/"
-          className="text-3xl font-extrabold text-blue-900 hover:text-blue-700 transition-colors duration-200"
-        >
+        <Link to="/" className="text-3xl font-extrabold text-blue-900 hover:text-blue-700 transition-colors duration-200">
           FundMyThesis
         </Link>
         {isLoggedIn && (
@@ -214,21 +195,14 @@ export default function MobileMenu() {
         )}
       </div>
 
-      {/* 段組みメニュー（divideで等間隔） */}
       <nav className="bg-slate-800 text-white border-b shadow-sm">
         {rows.map((row, idx) => {
-          const cols =
-            row.length === 2 ? "grid-cols-2" :
-            row.length === 4 ? "grid-cols-4" :
-            "grid-cols-3";
-
+          const cols = row.length === 2 ? "grid-cols-2" : row.length === 4 ? "grid-cols-4" : "grid-cols-3";
           return (
             <div key={idx} className={`grid ${cols} divide-x divide-white/10`}>
               {row.map((it) => (
                 <div key={it.key} className="flex items-stretch">
-                  <div className={`w-full px-2 py-1 ${fourTight}`}>
-                    {it.node}
-                  </div>
+                  <div className={`w-full px-2 py-1 ${fourTight}`}>{it.node}</div>
                 </div>
               ))}
             </div>
@@ -238,6 +212,3 @@ export default function MobileMenu() {
     </>
   );
 }
-
-
-

@@ -15,6 +15,10 @@ use App\Http\Controllers\IdentityVerificationApiController;
 use App\Http\Controllers\IdentityVerificationAdminController;
 use App\Http\Controllers\PayoutRecordApiController;
 use App\Http\Controllers\PayPalWebhookController;
+use App\Http\Controllers\SessionController;
+
+Route::get('/session', [SessionController::class, 'show']); 
+
 
 Route::post('/paypal/webhook', [PayPalWebhookController::class, 'handleWebhook']);
 
@@ -83,16 +87,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/profile', [ProfileApiController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileApiController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileApiController::class, 'destroy'])->name('profile.destroy');
-});
 
 
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/profile', [ProfileApiController::class, 'show']);
+   Route::get('/profile', [ProfileApiController::class, 'show']);
+
     Route::post('/profile', [ProfileApiController::class, 'updateIntroduction']);
     Route::post('/profile-image', [ProfileApiController::class, 'uploadImage']);
 });
