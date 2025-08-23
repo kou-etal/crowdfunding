@@ -16,15 +16,16 @@ class CrowdfundingProjectRepository
         return CrowdfundingProject::findOrFail($id);
     }
 
-    public function getPending()
-    {
-        return CrowdfundingProject::where('is_submitted', true)
-            ->where('is_approved', false)
-            ->where('is_rejected', false)
-            ->orderBy('created_at', 'desc')
-            ->get();
-    }
-
+   public function getPending()
+{
+    return CrowdfundingProject::where('is_submitted', true)
+        ->where('is_approved', false)
+        ->where('is_rejected', false)
+        ->with(['user.identityVerification'])
+        ->withSum('supports', 'amount')
+        ->orderBy('created_at', 'desc')
+        ->get();
+}
     public function getByUserId(int|string $userId)
     {
         return CrowdfundingProject::where('user_id', $userId)
