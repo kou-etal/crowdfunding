@@ -153,11 +153,37 @@ export function ProjectDetail() {
     }
   };
 
-  if (fetching || !project) {
+   if (fetching || !project) {
     return (
-      <div className="min-h-screen flex items-center justify-center">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="relative flex flex-col items-center gap-5">
+          <div className="relative w-28 h-28">
+            <svg className="absolute inset-0 w-20 h-20 m-auto animate-spin-reverse" viewBox="0 0 100 100" aria-hidden="true">
+              <circle cx="50" cy="50" r="30" fill="none" stroke="rgba(59,130,246,0.15)" strokeWidth="5" />
+              <circle cx="50" cy="50" r="30" fill="none" stroke="#60a5fa" strokeWidth="5" strokeDasharray="160" strokeDashoffset="110" strokeLinecap="round" className="drop-glow" />
+            </svg>
+            <div className="absolute inset-0 m-auto size-3 rounded-full bg-cyan-300 animate-pulse-glow" />
+          </div>
+          <div className="text-2xl font-extrabold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-400 to-cyan-300 animate-gradient-text" aria-live="polite">
+            LOADING
+          </div>
+        </div>
+        <style>{`
+          @keyframes spin-reverse { to { transform: rotate(-360deg); } }
+          .animate-spin-reverse { animation: spin-reverse 2s linear infinite; }
+          @keyframes gradient-text { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+          .animate-gradient-text { background-size:200% 200%; animation: gradient-text 2.8s ease-in-out infinite; }
+          @keyframes pulse-glow { 0%,100%{ box-shadow:0 0 10px rgba(103,232,249,.7),0 0 20px rgba(59,130,246,.5)} 50%{ box-shadow:0 0 20px rgba(103,232,249,1),0 0 40px rgba(59,130,246,.8)} }
+          .animate-pulse-glow { animation: pulse-glow 1.4s ease-in-out infinite; }
+          .drop-glow { filter: drop-shadow(0 0 6px rgba(59,130,246,.6)) drop-shadow(0 0 12px rgba(103,232,249,.5)); }
+          @media (prefers-reduced-motion: reduce) {
+            .animate-spin-reverse,.animate-gradient-text,.animate-pulse-glow{ animation:none!important; }
+          }
+        `}</style>
+      </div>
     );
   }
+
 
   return (
     <AppLayout>
