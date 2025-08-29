@@ -60,26 +60,26 @@ Laragon(Laravel 12+MySQL) + React の構成を前提としています。
 
 ### 1.1 リポジトリのクローン
 
-git clone https://github.com/kou-etal/crowdfunding.git
+git clone https://github.com/kou-etal/crowdfunding.git  
 cd crowdfunding
 
 ### 1.2 バックエンド依存関係のインストール
 composer install
 
 ### 1.3 フロントエンド依存関係のインストール
-cd frontend
-npm install
+cd frontend  
+npm install  
 cd ..
 
 ### 1.4 環境変数の設定
-cp .env.example .env
+cp .env.example .env  
 php artisan key:generate
 
 ### 1.5 データベースの作成とマイグレーション
 php artisan migrate 
 
 ### 1.6 開発サーバーの起動(サーバーサイドはLaragonのGUIで起動)
-cd frontend
+cd frontend  
 npm run dev
 
 
