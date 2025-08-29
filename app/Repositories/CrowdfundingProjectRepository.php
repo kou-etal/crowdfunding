@@ -32,15 +32,16 @@ class CrowdfundingProjectRepository
             ->orderBy('created_at', 'desc')
             ->get();
     }
-
-    public function getApprovedWithRelationsForIndex()
-    {
-        return CrowdfundingProject::where('is_approved', true)
-            ->where('is_rejected', false)
-            ->with(['user.identityVerification', 'supports.user'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-    }
+public function getApprovedWithRelationsForIndex()
+{
+    return CrowdfundingProject::where('is_approved', true)
+        ->where(function ($q) {
+            $q->where('is_rejected', false)->orWhereNull('is_rejected');
+        })
+        ->with(['user.identityVerification', 'supports.user'])
+        ->orderBy('created_at', 'desc')
+        ->get();
+}
 
     public function getDetailWithRelationsById(int|string $id): CrowdfundingProject
     {

@@ -7,9 +7,13 @@ import { MissionSection } from "../components/MissionSection";
 import HowItWorksSection from "@/components/HowItWorksSection";
 
 const toInt = (v, d = 0) => {
-  const n = Number(v);
+
+  if (v === null || v === undefined) return d;
+  const s = typeof v === "string" ? v.replace(/,/g, "") : v;
+  const n = Number(s);
   return Number.isFinite(n) ? n : d;
 };
+
 const parsePercent = (v) => {
   if (v === null || v === undefined) return null;
   if (typeof v === "number") return v;
@@ -19,6 +23,7 @@ const parsePercent = (v) => {
   }
   return null;
 };
+
 const isPastDay = (iso) => {
   if (!iso) return false;
   const d = new Date(iso);
@@ -26,6 +31,9 @@ const isPastDay = (iso) => {
   const day = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   return day(d) < day(today);
 };
+
+
+const isApproved = (v) => v === true || v === 1 || v === "1";
 
 export function CrowdfundingProjectList() {
   const [projects, setProjects] = useState([]);
@@ -47,6 +55,7 @@ export function CrowdfundingProjectList() {
 
   const isActive = (p) => {
     const deadlineOk = !p.deadline || !isPastDay(p.deadline);
+
     const goal = toInt(p.goal_amount, Infinity);
     const total = toInt(
       p.current_amount ??
@@ -57,7 +66,12 @@ export function CrowdfundingProjectList() {
       0
     );
 
-    const percent = parsePercent(p.progress_percent);
+   
+    let percent = parsePercent(p.progress_percent);
+    if ((percent === null || Number.isNaN(percent)) && Number.isFinite(goal) && goal > 0) {
+      percent = (total / goal) * 100;
+    }
+
     const reachedByPercent = percent !== null && percent >= 100;
 
     const reachedByFlag = Boolean(p.is_goal_reached);
@@ -71,14 +85,13 @@ export function CrowdfundingProjectList() {
   };
 
   const visibleProjects = projects
-    .filter((p) => p.is_approved)
+    .filter((p) => isApproved(p.is_approved))
     .filter(isActive);
 
   return (
     <AppLayout>
       <HeroSection />
       <HowItWorksSection/>
-    
 
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="
@@ -90,7 +103,6 @@ export function CrowdfundingProjectList() {
         </h1>
         <div className="w-24 h-1 bg-cf-science-blue mx-auto rounded-full mb-8" />
 
-       
         <div id="explore" className="h-0 scroll-mt-24" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 pb-20">
@@ -107,8 +119,7 @@ export function CrowdfundingProjectList() {
           )}
         </div>
       </div>
-        <MissionSection />
+      <MissionSection />
     </AppLayout>
   );
 }
-
