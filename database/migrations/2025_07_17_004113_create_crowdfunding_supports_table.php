@@ -10,36 +10,23 @@ return new class extends Migration {
         Schema::create('crowdfunding_supports', function (Blueprint $table) {
             $table->id();
 
-            // 支援者
-            $table->foreignId('user_id')
-                ->constrained()
-                ->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('project_id')->constrained('crowdfunding_projects')->cascadeOnDelete();
 
-            // プロジェクト
-            $table->foreignId('project_id')
-                ->constrained('crowdfunding_projects')
-                ->cascadeOnDelete();
+    
+            $table->decimal('amount', 12, 2)->unsigned();
 
-            // 金額（USD前提の小数）: 例) 999,999,999,999.99 まで
-            $table->decimal('amount', 12, 2);
-
-            // 通貨: USD 固定（PayPalからも USD を受ける想定）
             $table->string('currency', 3)->default('USD');
 
-            // 決済識別子
-            $table->string('payment_id', 100)->nullable()->unique(); // PayPal capture ID 等
-            $table->string('provider', 20)->default('paypal');       // 将来 Stripe 等にも拡張可
-            $table->string('stripe_session_id')->nullable();         // 予備
+            $table->string('payment_id', 100)->nullable()->unique(); 
+            $table->string('provider', 20)->default('paypal');
+            $table->string('stripe_session_id')->nullable();
 
-            // 完了日時
             $table->timestamp('supported_at')->nullable();
-
-            // Webhook レスポンス等の生JSON（監査/解析用）
             $table->json('raw_payload')->nullable();
 
             $table->timestamps();
 
-            // よく使う検索のためのインデックス
             $table->index('project_id');
             $table->index('user_id');
         });
@@ -50,4 +37,3 @@ return new class extends Migration {
         Schema::dropIfExists('crowdfunding_supports');
     }
 };
-

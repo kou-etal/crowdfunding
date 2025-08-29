@@ -11,11 +11,17 @@ class CrowdfundingSupport extends Model
         'project_id',
         'amount',
         'currency',
-        'payment_id',        
-        'provider',          
-        'stripe_session_id', 
+        'payment_id',
+        'provider',
+        'stripe_session_id',
         'supported_at',
-        'raw_payload',       
+        'raw_payload',
+    ];
+
+    protected $casts = [
+        'amount'       => 'decimal:2', 
+        'supported_at' => 'datetime',
+        'raw_payload'  => 'array',
     ];
 
     public function user()
@@ -28,3 +34,4 @@ class CrowdfundingSupport extends Model
         return $this->belongsTo(CrowdfundingProject::class, 'project_id');
     }
 }
+
