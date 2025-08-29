@@ -1,12 +1,13 @@
 # FundMyThesis (Crowdfunding Platform for Researchers)
 
 研究者や大学院生向けのクラウドファンディングプラットフォームのMVPです。  
-ユーザーはプロジェクトを作成し、PayPalを使って世界中から支援を受けることができます。
-
+ユーザーはプロジェクトを作成し、PayPalを使って支援を受けることができます。  
+実際にデプロイしたURL  
+https://fund.initialetal.com
 ## Features
 
 ### 🧑‍🔬 ユーザー機能
-- ユーザー登録・ログイン（メール認証）
+- ユーザー登録・ログイン
 - 本人確認（顔画像・本人確認書類・指導教員情報）
 - プロジェクト作成・編集
 - 支援・決済（PayPal）
@@ -17,13 +18,12 @@
 - 支援状況の閲覧
 
 ### 💳 決済機能
-- **PayPal Checkout** による安全な決済フロー
+- **PayPal Checkout** による決済
 - USD固定通貨
 
 ### 🎨 フロントエンド
 - React + Vite
 - Shadcn UI + TailwindCSS
-- レスポンシブデザイン対応
 
 ## Tech Stack
 
@@ -31,10 +31,10 @@
 |--------------|--------------------|--------------------------|
 | **Frontend** | React 18 + Vite    | SPA構成                  |
 | **Backend**  | Laravel 12         | RESTful API              |
-| **DB**       | MySQL 8            | UTF8MB4                  |
+| **DB**       | MySQL             | UTF8MB4                  |
 | **Payment**  | PayPal Checkout    | USD固定通貨              |
-| **Web Server** | Apache 2.4       | ConoHa VPS / Laragon対応 |
-| **Env Mgmt** | `.env`             | `APP_URL`, `FRONTEND_URL`, PayPalクレデンシャル |
+| **Web Server** | Apache 2.4       | ConoHa VPS / Laragon |
+| **Env Mgmt** | `.env`             | `APP_URL`, `FRONTEND_URL`, PayPal |
 
 ## System Architecture
 
@@ -82,4 +82,5 @@ php artisan migrate
 cd frontend  
 npm run dev
 
+## Future Features
 
