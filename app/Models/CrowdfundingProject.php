@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\CrowdfundingSupport;
+use Illuminate\Database\Eloquent\Factories\HasFactory; 
 
 class CrowdfundingProject extends Model
 {
+    use HasFactory; 
     protected $fillable = [
         'user_id',
         'title',

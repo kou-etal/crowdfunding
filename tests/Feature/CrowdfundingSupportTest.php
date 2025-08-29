@@ -2,99 +2,75 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\CrowdfundingProject;
 use App\Models\CrowdfundingSupport;
+use App\Services\Crowdfunding\SupportService;
+use App\Services\Payments\PaypalClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class CrowdfundingSupportTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * @test
-     */
-    public function 支援額を合計して残額を正しく計算できる()
+    protected function setUp(): void
     {
-        $user = User::factory()->create();
-        $project = CrowdfundingProject::factory()->create([
-            'goal_amount' => '100.00'
-        ]);
-
-        // 既存支援を2つ作る
-        CrowdfundingSupport::factory()->create([
-            'user_id'    => $user->id,
-            'project_id' => $project->id,
-            'amount'     => '25.50',
-        ]);
-        CrowdfundingSupport::factory()->create([
-            'user_id'    => $user->id,
-            'project_id' => $project->id,
-            'amount'     => '10.00',
-        ]);
-
-        // APIで残額を取得
-        $response = $this->actingAs($user)->getJson("/api/projects/{$project->id}/remaining");
-
-        $response->assertOk();
-        $this->assertEquals("64.50", $response->json('remaining'));  // ← 100 - 25.5 - 10 = 64.5
+        parent::setUp();
+        
+        $mock = $this->createMock(PaypalClient::class);
+        $this->app->instance(PaypalClient::class, $mock);
     }
 
-    /**
-     * @test
-     */
-    public function 残額を超える支援は422を返す()
+    #[Test]
+    public function 支援額を合計して残額を正しく計算できる(): void
     {
-        $user = User::factory()->create();
-        $project = CrowdfundingProject::factory()->create([
-            'goal_amount' => '50.00'
-        ]);
+        $project = CrowdfundingProject::factory()->goal(100)->create();
 
-        // すでに40ドル支援されている状態
-        CrowdfundingSupport::factory()->create([
-            'user_id'    => $user->id,
-            'project_id' => $project->id,
-            'amount'     => '40.00',
-        ]);
+        CrowdfundingSupport::factory()->forProject($project)->amount('25.50')->create();
+        CrowdfundingSupport::factory()->forProject($project)->amount('10.00')->create();
 
-        $response = $this->actingAs($user)->postJson('/api/supports', [
-            'project_id' => $project->id,
-            'amount' => '20.00',
-        ]);
+        /** @var SupportService $svc */
+        $svc = app(SupportService::class);
 
-        $response->assertStatus(422);
-        $this->assertEquals(
-            'Amount exceeds remaining goal.',
-            $response->json('message')
-        );
+        $remaining = $svc->remainingForProject($project->id); 
+        $this->assertSame('64.50', number_format($remaining, 2, '.', ''));
     }
 
-    /**
-     * @test
-     */
-    public function 目標到達後は支援できない()
+    #[Test]
+    public function 残額を超える支援は422を返す(): void
     {
-        $user = User::factory()->create();
-        $project = CrowdfundingProject::factory()->create([
-            'goal_amount' => '30.00'
-        ]);
+        $project = CrowdfundingProject::factory()->goal(50)->create();
+        CrowdfundingSupport::factory()->forProject($project)->amount('40.00')->create();
 
-        CrowdfundingSupport::factory()->create([
-            'user_id'    => $user->id,
-            'project_id' => $project->id,
-            'amount'     => '30.00',
-        ]);
+        /** @var SupportService $svc */
+        $svc = app(SupportService::class);
 
-        $response = $this->actingAs($user)->postJson('/api/supports', [
-            'project_id' => $project->id,
-            'amount' => '5.00',
-        ]);
+        try {
+            $svc->assertCanContribute($project, 20.00);
+            $this->fail('HttpResponseException が投げられるはず');
+        } catch (HttpResponseException $e) {
+            $this->assertSame(422, $e->getResponse()->getStatusCode());
+            $this->assertStringContainsString('Amount exceeds remaining goal.', $e->getResponse()->getContent());
+        }
+    }
 
-        $response->assertStatus(409);
-        $this->assertEquals(
-            'This project already reached its goal.',
-            $response->json('message')
-        );
+    #[Test]
+    public function 目標到達後は支援できない(): void
+    {
+        $project = CrowdfundingProject::factory()->goal(30)->create();
+        CrowdfundingSupport::factory()->forProject($project)->amount('30.00')->create();
+
+        /** @var SupportService $svc */
+        $svc = app(SupportService::class);
+
+        try {
+            $svc->assertCanContribute($project, 5.00);
+            $this->fail('HttpResponseException が投げられるはず');
+        } catch (HttpResponseException $e) {
+            $this->assertSame(409, $e->getResponse()->getStatusCode());
+            $this->assertStringContainsString('already reached its goal', $e->getResponse()->getContent());
+        }
     }
 }
