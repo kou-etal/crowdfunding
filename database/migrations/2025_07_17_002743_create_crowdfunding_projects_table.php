@@ -17,11 +17,10 @@ public function up(): void
             $table->string('image_path')->nullable();
             $table->text('rejected_reason')->nullable();
 
-            // ✅ 審査フラグ
-            $table->boolean('is_submitted')->default(false); // ユーザーから提出されたか
-            $table->boolean('is_approved')->default(false);  // 運営により承認されたか
-            $table->boolean('is_rejected')->default(false);  // 運営により却下されたか
-           
+            $table->boolean('is_submitted')->default(false); 
+            $table->boolean('is_approved')->default(false);  
+            $table->boolean('is_rejected')->default(false);  
+
 
             $table->timestamps();
         });
