@@ -1,69 +1,84 @@
-# Crowdfunding Platform
+# FundMyThesis (Crowdfunding Platform for Researchers)
 
-A full-stack crowdfunding platform built with **Laravel 12** (API) and **React 18** (frontend).  
-This platform allows researchers, students, and creators to launch crowdfunding projects, receive financial support, and manage payouts securely.
+研究者や大学院生向けのクラウドファンディングプラットフォームのMVPです。  
+ユーザーはプロジェクトを作成し、PayPalを使って世界中から支援を受けることができます。
 
----
+## Features
 
-## 🚀 Overview
+### 🧑‍🔬 ユーザー機能
+- ユーザー登録・ログイン（メール認証）
+- 本人確認（顔画像・本人確認書類・指導教員情報）
+- プロジェクト作成・編集
+- 支援・決済（PayPal）
 
-Key features include:
+### 🛠️ 管理者機能
+- 本人確認の承認・却下
+- プロジェクトの承認・却下
+- 支援状況の閲覧
 
-- Multi-payment support (**PayPal** / **Stripe**)
-- Secure user authentication with email verification
-- Identity verification system
-- Project management dashboard
-- Real-time progress tracking
-- Admin panel for project approvals and payouts
+### 💳 決済機能
+- **PayPal Checkout** による安全な決済フロー
+- USD固定通貨
 
----
+### 🎨 フロントエンド
+- React + Vite
+- Shadcn UI + TailwindCSS
+- レスポンシブデザイン対応
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-| Layer       | Technology |
-|------------|-----------|
-| **Frontend** | React 18, TypeScript, Tailwind CSS, Shadcn UI |
-| **Backend**  | Laravel 12 (REST API) |
-| **Database** | MySQL 8 |
-| **Auth**     | Laravel Sanctum, Email Verification |
-| **Payments** | PayPal SDK, Stripe Checkout |
-| **Deployment** | ConoHa VPS, Nginx, PM2 |
-| **Others**   | WebSocket (Pusher), Slack Notifications |
+| Layer         | Technology        | Notes                    |
+|--------------|--------------------|--------------------------|
+| **Frontend** | React 18 + Vite    | SPA構成                  |
+| **Backend**  | Laravel 12         | RESTful API              |
+| **DB**       | MySQL 8            | UTF8MB4                  |
+| **Payment**  | PayPal Checkout    | USD固定通貨              |
+| **Web Server** | Apache 2.4       | ConoHa VPS / Laragon対応 |
+| **Env Mgmt** | `.env`             | `APP_URL`, `FRONTEND_URL`, PayPalクレデンシャル |
 
----
+## System Architecture
 
-## ✨ Main Features
+```txt
+React (Vite) SPA
+        |
+        | axios (JSON)
+        ↓
+Laravel 12 REST API
+        |
+        | MySQL 8 (utf8mb4)
+        ↓
+PayPal Checkout (Sandbox/Live)```
 
-### For Users
-- 🔹 **User Registration & Login** with email verification  
-- 🔹 **Identity Verification** (face image + supervisor info)  
-- 🔹 **Create Projects** with goals, deadlines, and images  
-- 🔹 **Support Projects** via Stripe / PayPal  
-- 🔹 **Real-time Progress Tracking** with dynamic charts  
 
-### For Admins
-- 🛠 **Project Approval & Rejection**
-- 💳 **Payout Management**
-- 📊 **User & Project Dashboard**
+## FundMyThesis Setup Guide
 
-## ⚡️ Getting Started
+FundMyThesis のローカル開発環境でのセットアップ手順です。  
+Laragon(Laravel 12+MySQL) + React の構成を前提としています。
 
-### 1. Clone the Repository
+## **1. ローカル環境セットアップ**
 
-git clone https://github.com/<your-username>/<repo>.git
-cd crowdfunding-app
+### 1.1 リポジトリのクローン
+```bash
+git clone https://github.com/kou-etal/crowdfunding.git
+cd crowdfunding
 
-### 2. Setup Backend
-cd backend
-cp .env.example .env
+### 1.2 バックエンド依存関係のインストール
 composer install
-php artisan key:generate
-php artisan migrate
-php artisan serve
 
-### 3. Setup Frontend
-
+### 1.3 フロントエンド依存関係のインストール
 cd frontend
-cp .env.example .env
 npm install
+cd ..
+
+### 1.4 環境変数の設定
+cp .env.example .env
+php artisan key:generate
+
+### 1.5 データベースの作成とマイグレーション
+php artisan migrate 
+
+### 1.6 開発サーバーの起動(サーバーサイドはLaragonのGUIで起動)
+cd frontend
 npm run dev
+
+
