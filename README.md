@@ -47,7 +47,8 @@ Laravel 12 REST API
         |
         | MySQL 8 (utf8mb4)
         ↓
-PayPal Checkout (Sandbox/Live)```
+PayPal Checkout (Sandbox/Live)
+```
 
 
 ## FundMyThesis Setup Guide
