@@ -46,7 +46,7 @@ return [
 'paypal' => [
     'client_id' => env('PAYPAL_CLIENT_ID'),
     'secret'    => env('PAYPAL_SECRET'),
-    // 本番切替は .env の PAYPAL_BASE で
+    // 本番切替は .env の PAYPAL_BASE
     'base'      => env('PAYPAL_BASE', 'https://api-m.sandbox.paypal.com'),
     'webhook_id' => env('PAYPAL_WEBHOOK_ID'),
 ],
