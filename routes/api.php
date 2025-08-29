@@ -8,7 +8,7 @@ use App\Http\Controllers\AuthApiController;
 use App\Http\Controllers\ProfileApiController;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Controllers\VerifyEmailController;
-use App\Http\Controllers\StripeWebhookController;
+#use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\CrowdfundingProjectApiController;
 use App\Http\Controllers\CrowdfundingSupportApiController;
 use App\Http\Controllers\IdentityVerificationApiController;
