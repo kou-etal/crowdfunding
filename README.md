@@ -59,7 +59,7 @@ Laragon(Laravel 12+MySQL) + React の構成を前提としています。
 ## **1. ローカル環境セットアップ**
 
 ### 1.1 リポジトリのクローン
-```bash
+
 git clone https://github.com/kou-etal/crowdfunding.git
 cd crowdfunding
 
