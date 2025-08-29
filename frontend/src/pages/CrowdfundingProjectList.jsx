@@ -7,13 +7,9 @@ import { MissionSection } from "../components/MissionSection";
 import HowItWorksSection from "@/components/HowItWorksSection";
 
 const toInt = (v, d = 0) => {
-
-  if (v === null || v === undefined) return d;
-  const s = typeof v === "string" ? v.replace(/,/g, "") : v;
-  const n = Number(s);
+  const n = Number(v);
   return Number.isFinite(n) ? n : d;
 };
-
 const parsePercent = (v) => {
   if (v === null || v === undefined) return null;
   if (typeof v === "number") return v;
@@ -23,7 +19,6 @@ const parsePercent = (v) => {
   }
   return null;
 };
-
 const isPastDay = (iso) => {
   if (!iso) return false;
   const d = new Date(iso);
@@ -33,7 +28,7 @@ const isPastDay = (iso) => {
 };
 
 
-const isApproved = (v) => v === true || v === 1 || v === "1";
+const isApproved = (v) => v === undefined || v === true || v === 1 || v === "1";
 
 export function CrowdfundingProjectList() {
   const [projects, setProjects] = useState([]);
@@ -55,7 +50,6 @@ export function CrowdfundingProjectList() {
 
   const isActive = (p) => {
     const deadlineOk = !p.deadline || !isPastDay(p.deadline);
-
     const goal = toInt(p.goal_amount, Infinity);
     const total = toInt(
       p.current_amount ??
@@ -66,12 +60,7 @@ export function CrowdfundingProjectList() {
       0
     );
 
-   
-    let percent = parsePercent(p.progress_percent);
-    if ((percent === null || Number.isNaN(percent)) && Number.isFinite(goal) && goal > 0) {
-      percent = (total / goal) * 100;
-    }
-
+    const percent = parsePercent(p.progress_percent);
     const reachedByPercent = percent !== null && percent >= 100;
 
     const reachedByFlag = Boolean(p.is_goal_reached);
@@ -85,7 +74,7 @@ export function CrowdfundingProjectList() {
   };
 
   const visibleProjects = projects
-    .filter((p) => isApproved(p.is_approved))
+    .filter((p) => isApproved(p.is_approved)) 
     .filter(isActive);
 
   return (
@@ -123,3 +112,4 @@ export function CrowdfundingProjectList() {
     </AppLayout>
   );
 }
+
